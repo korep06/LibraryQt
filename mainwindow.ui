@@ -1,0 +1,713 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTabWidget" name="tabWidget">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>801</width>
+      <height>571</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>70</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="minimumSize">
+     <size>
+      <width>0</width>
+      <height>25</height>
+     </size>
+    </property>
+    <property name="tabPosition">
+     <enum>QTabWidget::TabPosition::West</enum>
+    </property>
+    <property name="currentIndex">
+     <number>0</number>
+    </property>
+    <widget class="QWidget" name="tab">
+     <attribute name="title">
+      <string>Книги</string>
+     </attribute>
+     <widget class="QWidget" name="horizontalLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>0</y>
+        <width>751</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_addBook">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="focusPolicy">
+            <enum>Qt::FocusPolicy::StrongFocus</enum>
+           </property>
+           <property name="layoutDirection">
+            <enum>Qt::LayoutDirection::LeftToRight</enum>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/add.png</normaloff>:/icons/button/img/add.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Добавить</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_editBook">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/edit.png</normaloff>:/icons/button/img/edit.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>9</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Редактировать</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_deleteBook">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/remove.png</normaloff>:/icons/button/img/remove.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Удалить</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_4">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_searchBook">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/search.png</normaloff>:/icons/button/img/search.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_4">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Поиск</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_giveBook">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/givebook.png</normaloff>:/icons/button/img/givebook.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_5">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Выдать</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_6">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_getBook">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/getbook.png</normaloff>:/icons/button/img/getbook.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_6">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Принять</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_7">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="le_filterBook">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>70</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_7">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Поиск по таблице</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QTableView" name="tbl_view_book">
+      <property name="geometry">
+       <rect>
+        <x>15</x>
+        <y>81</y>
+        <width>751</width>
+        <height>471</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_2">
+     <attribute name="title">
+      <string>Читатели</string>
+     </attribute>
+     <widget class="QTableView" name="tbl_view_reader">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>80</y>
+        <width>741</width>
+        <height>481</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QWidget" name="horizontalLayoutWidget_2">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>0</y>
+        <width>751</width>
+        <height>81</height>
+       </rect>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_8">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_addReader">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/add.png</normaloff>:/icons/button/img/add.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_8">
+           <property name="text">
+            <string>Добавить</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_9">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_editReader">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/edit.png</normaloff>:/icons/button/img/edit.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_9">
+           <property name="text">
+            <string>Редактировать</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_10">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_deleteReader">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/remove.png</normaloff>:/icons/button/img/remove.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_10">
+           <property name="text">
+            <string>Удалить</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_11">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_searchReader">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/user.png</normaloff>:/icons/button/img/user.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>Поиск</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_12">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLineEdit" name="le_filterReader">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>50</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="sizeIncrement">
+            <size>
+             <width>50</width>
+             <height>25</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_12">
+           <property name="text">
+            <string>Поиск по таблице</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Orientation::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_bar_file">
+    <property name="title">
+     <string>Файл</string>
+    </property>
+    <addaction name="mb_act_save_file"/>
+    <addaction name="mb_act_close_app"/>
+   </widget>
+   <widget class="QMenu" name="menu_bar_edit">
+    <property name="title">
+     <string>Правка</string>
+    </property>
+    <addaction name="action"/>
+    <addaction name="action_3"/>
+    <addaction name="mb_act_add_book"/>
+    <addaction name="mb_act_delete_book"/>
+    <addaction name="mb_act_add_reader"/>
+    <addaction name="mb_act_delete_reader"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menu_bar_search">
+    <property name="title">
+     <string>Поиск</string>
+    </property>
+    <addaction name="mb_act_search_book"/>
+    <addaction name="mb_act_search_reader"/>
+   </widget>
+   <widget class="QMenu" name="menu_bar_info">
+    <property name="title">
+     <string>Статистика</string>
+    </property>
+    <addaction name="mb_act_get_info"/>
+   </widget>
+   <addaction name="menu_bar_file"/>
+   <addaction name="menu_bar_edit"/>
+   <addaction name="menu_bar_search"/>
+   <addaction name="menu_bar_info"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="books_save">
+   <property name="text">
+    <string>Сохранить</string>
+   </property>
+  </action>
+  <action name="act_showBook">
+   <property name="text">
+    <string>Показать вкладку</string>
+   </property>
+  </action>
+  <action name="act_showReaders">
+   <property name="text">
+    <string>Показать вкладку</string>
+   </property>
+  </action>
+  <action name="mb_act_save_file">
+   <property name="text">
+    <string>Сохранить</string>
+   </property>
+  </action>
+  <action name="mb_act_close_app">
+   <property name="text">
+    <string>Закрыть</string>
+   </property>
+  </action>
+  <action name="mb_act_add_book">
+   <property name="text">
+    <string>Добавить книгу</string>
+   </property>
+  </action>
+  <action name="mb_act_add_reader">
+   <property name="text">
+    <string>Добавить читателя</string>
+   </property>
+  </action>
+  <action name="mb_act_delete_book">
+   <property name="text">
+    <string>Удалить книгу</string>
+   </property>
+  </action>
+  <action name="mb_act_delete_reader">
+   <property name="text">
+    <string> Удалить читателя</string>
+   </property>
+  </action>
+  <action name="mb_act_search_book">
+   <property name="text">
+    <string>Найти книгу</string>
+   </property>
+  </action>
+  <action name="mb_act_search_reader">
+   <property name="text">
+    <string>Найти читателя</string>
+   </property>
+  </action>
+  <action name="mb_act_get_info">
+   <property name="text">
+    <string>Вывести статистику</string>
+   </property>
+  </action>
+  <action name="action">
+   <property name="text">
+    <string>Выдать книгу</string>
+   </property>
+  </action>
+  <action name="action_3">
+   <property name="text">
+    <string>Принять книгу</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="img-button.qrc"/>
+ </resources>
+ <connections/>
+</ui>

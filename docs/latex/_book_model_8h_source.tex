@@ -1,0 +1,60 @@
+\doxysection{Book\+Model.\+h}
+\hypertarget{_book_model_8h_source}{}\label{_book_model_8h_source}\mbox{\hyperlink{_book_model_8h}{См. документацию.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#ifndef\ BOOKMODEL\_H}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#define\ BOOKMODEL\_H}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <deque>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <QList>}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#include\ <QString>}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#include\ <QAbstractItemModel>}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ <QDate>}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#include\ <optional>}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_book}{Book}}\ \{}
+\DoxyCodeLine{00028\ \ \ \ \ QString\ \mbox{\hyperlink{struct_book_a0e6552509d3e15253958bf0c23f8b559}{code}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00029\ \ \ \ \ QString\ \mbox{\hyperlink{struct_book_a05cf01fd41887427726e87e22dff5bd8}{name}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00030\ \ \ \ \ QString\ \mbox{\hyperlink{struct_book_a2d1d0082b8b0f6ef3c197a31683f2733}{author}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{struct_book_a73857f433ff055d08eb868be4dd9498d}{is\_taken}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00032\ \ \ \ \ std::optional<QDate>\ \mbox{\hyperlink{struct_book_a711450a73979f889a16fb0630129c872}{date\_taken}};\ }
+\DoxyCodeLine{00033\ \};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00041\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_book_model_aee3a991be526972efa22f371f4f7e1ad}{BookModel}}\ :\ \textcolor{keyword}{public}\ QAbstractTableModel\ \{}
+\DoxyCodeLine{00042\ \ \ \ \ Q\_OBJECT}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{class_book_model_aee3a991be526972efa22f371f4f7e1ad}{BookModel}}(QList<Book>\&\ books,\ QObject*\ parent\ =\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{class_book_model_a3f31dc43225c33c6b5e202294e0013f0}{rowCount}}(\textcolor{keyword}{const}\ QModelIndex\&\ parent\ =\ QModelIndex())\ \textcolor{keyword}{const\ override};}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{class_book_model_a6920054c8bc496f7a3c44536d69e087b}{columnCount}}(\textcolor{keyword}{const}\ QModelIndex\&\ parent\ =\ QModelIndex())\ \textcolor{keyword}{const\ override};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00072\ \ \ \ \ QVariant\ \mbox{\hyperlink{class_book_model_a811196dec0297e04fe2639d3dda2df59}{data}}(\textcolor{keyword}{const}\ QModelIndex\&\ index,\ \textcolor{keywordtype}{int}\ role\ =\ Qt::DisplayRole)\ \textcolor{keyword}{const\ override};}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00081\ \ \ \ \ QVariant\ \mbox{\hyperlink{class_book_model_a60e945fb4aaacd826fd5ea9b57eace8d}{headerData}}(\textcolor{keywordtype}{int}\ section,\ Qt::Orientation\ orientation,\ \textcolor{keywordtype}{int}\ role\ =\ Qt::DisplayRole)\ \textcolor{keyword}{const\ override};}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_book_model_a9587caab88db3d4f5c9c28399efdf6ba}{AddBook}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{struct_book}{Book}}\&\ book);}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_book_model_ae434cea701a6198107823dfe791ba78d}{RemoveBook}}(\textcolor{keyword}{const}\ QString\&\ code);}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00100\ \ \ \ \ \mbox{\hyperlink{struct_book}{Book}}\ \mbox{\hyperlink{class_book_model_aefd021d19146c3f26b03de935d5ea774}{FindBook}}(\textcolor{keyword}{const}\ QString\&\ code)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keyword}{const}\ QList<Book>\&\ \mbox{\hyperlink{class_book_model_ac4ab40f339e423d03e85cf72823ce3c6}{GetBooks}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_book_model_aeffa7435c761c63c77955c488299de3d}{SaveToFile}}(\textcolor{keyword}{const}\ QString\&\ filePath)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_book_model_abbbece811df830d032cc19bf0accdb65}{LoadFromFile}}(\textcolor{keyword}{const}\ QString\&\ filePath);}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00123\ \ \ \ \ QList<Book>\ books\_;\ }
+\DoxyCodeLine{00124\ \};}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ BOOKMODEL\_H}}
+
+\end{DoxyCode}

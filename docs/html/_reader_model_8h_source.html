@@ -1,0 +1,189 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.14.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>LibraryQt: Исходный файл ReaderModel.h</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="clipboard.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<script type="text/javascript" src="cookie.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">LibraryQt<span id="projectnumber">&#160;1</span>
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Создано системой Doxygen 1.14.0 -->
+<script type="text/javascript">
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+</script>
+<script type="text/javascript">
+$(function() { codefold.init(); });
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+$(function() {
+  initMenu('',true,false,'search.php','Поиск',true);
+  $(function() { init_search(); });
+});
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+$(function(){initNavTree('_reader_model_8h_source.html','',''); });
+</script>
+<div id="container">
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">Загрузка...</div>
+<div class="SRStatus" id="Searching">Поиск...</div>
+<div class="SRStatus" id="NoMatches">Не найдено</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">ReaderModel.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="_reader_model_8h.html">См. документацию.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#ifndef READERMODEL_H</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#define READERMODEL_H</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#pragma once</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;QString&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;QList&gt;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;QAbstractTableModel&gt;</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span></div>
+<div class="foldopen" id="foldopen00023" data-start="{" data-end="};">
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="_reader_model_8h.html#a2633cb393c68bb2ee8080db58fb7ba93">   23</a></span><span class="keyword">enum</span> <a class="code hl_enumeration" href="_reader_model_8h.html#a2633cb393c68bb2ee8080db58fb7ba93">Sex</a> {</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="_reader_model_8h.html#a2633cb393c68bb2ee8080db58fb7ba93a4fcdc3f409e8e27fbfd35bbd6472877c">   24</a></span>    <a class="code hl_enumvalue" href="_reader_model_8h.html#a2633cb393c68bb2ee8080db58fb7ba93a4fcdc3f409e8e27fbfd35bbd6472877c">Female</a>, </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="_reader_model_8h.html#a2633cb393c68bb2ee8080db58fb7ba93adfdd236ca597df5a4d2f5fa0d0f6ec93">   25</a></span>    <a class="code hl_enumvalue" href="_reader_model_8h.html#a2633cb393c68bb2ee8080db58fb7ba93adfdd236ca597df5a4d2f5fa0d0f6ec93">Male</a>,   </div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>};</div>
+</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span></div>
+<div class="foldopen" id="foldopen00032" data-start="{" data-end="};">
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="struct_reader.html">   32</a></span><span class="keyword">struct </span><a class="code hl_struct" href="struct_reader.html">Reader</a> {</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="struct_reader.html#a3d9a988d2fb18391ebc5225de147db6a">   33</a></span>    QString <a class="code hl_variable" href="struct_reader.html#a3d9a988d2fb18391ebc5225de147db6a">ID</a>;              </div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="struct_reader.html#a660fb20f6830d33a58c4f96ab093335e">   34</a></span>    QString <a class="code hl_variable" href="struct_reader.html#a660fb20f6830d33a58c4f96ab093335e">first_name</a>;      </div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="struct_reader.html#a634c62a76311232b15973965a27ab737">   35</a></span>    QString <a class="code hl_variable" href="struct_reader.html#a634c62a76311232b15973965a27ab737">second_name</a>;     </div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno"><a class="line" href="struct_reader.html#a651121aa6f81cab627297d5092b079de">   36</a></span>    QString <a class="code hl_variable" href="struct_reader.html#a651121aa6f81cab627297d5092b079de">third_name</a>;      </div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno"><a class="line" href="struct_reader.html#a93b644bd1bccd070952a5d7648201348">   37</a></span>    <a class="code hl_enumeration" href="_reader_model_8h.html#a2633cb393c68bb2ee8080db58fb7ba93">Sex</a> <a class="code hl_variable" href="struct_reader.html#a93b644bd1bccd070952a5d7648201348">gender</a>;              </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno"><a class="line" href="struct_reader.html#af945b2b26a402b97c09e9ad68969b028">   38</a></span>    QList&lt;QString&gt; <a class="code hl_variable" href="struct_reader.html#af945b2b26a402b97c09e9ad68969b028">taken_books</a>; </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>};</div>
+</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span></div>
+<div class="foldopen" id="foldopen00048" data-start="{" data-end="};">
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno"><a class="line" href="class_reader_model.html">   48</a></span><span class="keyword">class </span><a class="code hl_function" href="class_reader_model.html#a33772a8e085267fb694806e931967fd7">ReaderModel</a> : <span class="keyword">public</span> QAbstractTableModel {</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    Q_OBJECT</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keyword">explicit</span> <a class="code hl_function" href="class_reader_model.html#a33772a8e085267fb694806e931967fd7">ReaderModel</a>(QList&lt;Reader&gt;&amp; readers, QObject* parent = <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keywordtype">int</span> <a class="code hl_function" href="class_reader_model.html#a83b0d0f87ac8774125f3c226e4e001fe">rowCount</a>(<span class="keyword">const</span> QModelIndex &amp;parent = QModelIndex()) <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span></div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>    <span class="keywordtype">int</span> <a class="code hl_function" href="class_reader_model.html#a29eea846ad15ace9239e2546363a91eb">columnCount</a>(<span class="keyword">const</span> QModelIndex &amp;parent = QModelIndex()) <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span></div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    QVariant <a class="code hl_function" href="class_reader_model.html#a79bb21c87fcdea4f89f376480f2016f4">data</a>(<span class="keyword">const</span> QModelIndex &amp;index, <span class="keywordtype">int</span> role = Qt::DisplayRole) <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span></div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>    QVariant <a class="code hl_function" href="class_reader_model.html#a608fd4aed2c0f534e2a5cd49f666c7b4">headerData</a>(<span class="keywordtype">int</span> section, Qt::Orientation orientation, <span class="keywordtype">int</span> role = Qt::DisplayRole) <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span></div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="class_reader_model.html#a8a5fe62c6fd7e4d7c2ed1aa79b1ed31a">AddReader</a>(<span class="keyword">const</span> <a class="code hl_struct" href="struct_reader.html">Reader</a>&amp; reader);</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="class_reader_model.html#a1831eba6938fb64823923b31e7f4f652">RemoveReader</a>(<span class="keyword">const</span> QString&amp; <span class="keywordtype">id</span>);</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span></div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    std::optional&lt;Reader&gt; <a class="code hl_function" href="class_reader_model.html#a0b2e44fe511357263a0cfe74ea28433a">FindReader</a>(<span class="keyword">const</span> QString&amp; <span class="keywordtype">id</span>);</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span></div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keyword">const</span> QList&lt;Reader&gt; <a class="code hl_function" href="class_reader_model.html#a284f1d60304ada8e05773ef6a3470bcd">GetReaders</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span></div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="class_reader_model.html#a123191d84940f7e52040760805b9797e">LoadFromFile</a>(<span class="keyword">const</span> QString&amp; filePath);</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span></div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="class_reader_model.html#aed15758983457ab2c6fb5dcb48ad8f1d">SaveToFile</a>(<span class="keyword">const</span> QString&amp; filePath);</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno">  128</span> </div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span>    QList&lt;Reader&gt; readers_; </div>
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno">  131</span>};</div>
+</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span> </div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span><span class="preprocessor">#endif </span><span class="comment">// READERMODEL_H</span></div>
+<div class="ttc" id="a_reader_model_8h_html_a2633cb393c68bb2ee8080db58fb7ba93"><div class="ttname"><a href="_reader_model_8h.html#a2633cb393c68bb2ee8080db58fb7ba93">Sex</a></div><div class="ttdeci">Sex</div><div class="ttdoc">Перечисление для обозначения пола читателя</div><div class="ttdef"><b>Определения</b> ReaderModel.h:23</div></div>
+<div class="ttc" id="a_reader_model_8h_html_a2633cb393c68bb2ee8080db58fb7ba93a4fcdc3f409e8e27fbfd35bbd6472877c"><div class="ttname"><a href="_reader_model_8h.html#a2633cb393c68bb2ee8080db58fb7ba93a4fcdc3f409e8e27fbfd35bbd6472877c">Female</a></div><div class="ttdeci">@ Female</div><div class="ttdoc">Женский пол</div><div class="ttdef"><b>Определения</b> ReaderModel.h:24</div></div>
+<div class="ttc" id="a_reader_model_8h_html_a2633cb393c68bb2ee8080db58fb7ba93adfdd236ca597df5a4d2f5fa0d0f6ec93"><div class="ttname"><a href="_reader_model_8h.html#a2633cb393c68bb2ee8080db58fb7ba93adfdd236ca597df5a4d2f5fa0d0f6ec93">Male</a></div><div class="ttdeci">@ Male</div><div class="ttdoc">Мужской пол</div><div class="ttdef"><b>Определения</b> ReaderModel.h:25</div></div>
+<div class="ttc" id="aclass_reader_model_html_a0b2e44fe511357263a0cfe74ea28433a"><div class="ttname"><a href="class_reader_model.html#a0b2e44fe511357263a0cfe74ea28433a">ReaderModel::FindReader</a></div><div class="ttdeci">std::optional&lt; Reader &gt; FindReader(const QString &amp;id)</div><div class="ttdoc">Находит читателя по идентификатору</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:123</div></div>
+<div class="ttc" id="aclass_reader_model_html_a123191d84940f7e52040760805b9797e"><div class="ttname"><a href="class_reader_model.html#a123191d84940f7e52040760805b9797e">ReaderModel::LoadFromFile</a></div><div class="ttdeci">bool LoadFromFile(const QString &amp;filePath)</div><div class="ttdoc">Загружает список читателей из файла</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:147</div></div>
+<div class="ttc" id="aclass_reader_model_html_a1831eba6938fb64823923b31e7f4f652"><div class="ttname"><a href="class_reader_model.html#a1831eba6938fb64823923b31e7f4f652">ReaderModel::RemoveReader</a></div><div class="ttdeci">void RemoveReader(const QString &amp;id)</div><div class="ttdoc">Удаляет читателя из модели по идентификатору</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:106</div></div>
+<div class="ttc" id="aclass_reader_model_html_a284f1d60304ada8e05773ef6a3470bcd"><div class="ttname"><a href="class_reader_model.html#a284f1d60304ada8e05773ef6a3470bcd">ReaderModel::GetReaders</a></div><div class="ttdeci">const QList&lt; Reader &gt; GetReaders() const</div><div class="ttdoc">Возвращает копию списка читателей</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:137</div></div>
+<div class="ttc" id="aclass_reader_model_html_a29eea846ad15ace9239e2546363a91eb"><div class="ttname"><a href="class_reader_model.html#a29eea846ad15ace9239e2546363a91eb">ReaderModel::columnCount</a></div><div class="ttdeci">int columnCount(const QModelIndex &amp;parent=QModelIndex()) const override</div><div class="ttdoc">Возвращает количество столбцов в модели</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:41</div></div>
+<div class="ttc" id="aclass_reader_model_html_a33772a8e085267fb694806e931967fd7"><div class="ttname"><a href="class_reader_model.html#a33772a8e085267fb694806e931967fd7">ReaderModel::ReaderModel</a></div><div class="ttdeci">ReaderModel(QList&lt; Reader &gt; &amp;readers, QObject *parent=nullptr)</div><div class="ttdoc">Конструктор модели читателей</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:23</div></div>
+<div class="ttc" id="aclass_reader_model_html_a608fd4aed2c0f534e2a5cd49f666c7b4"><div class="ttname"><a href="class_reader_model.html#a608fd4aed2c0f534e2a5cd49f666c7b4">ReaderModel::headerData</a></div><div class="ttdeci">QVariant headerData(int section, Qt::Orientation orientation, int role=Qt::DisplayRole) const override</div><div class="ttdoc">Возвращает заголовки для столбцов и строк</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:77</div></div>
+<div class="ttc" id="aclass_reader_model_html_a79bb21c87fcdea4f89f376480f2016f4"><div class="ttname"><a href="class_reader_model.html#a79bb21c87fcdea4f89f376480f2016f4">ReaderModel::data</a></div><div class="ttdeci">QVariant data(const QModelIndex &amp;index, int role=Qt::DisplayRole) const override</div><div class="ttdoc">Возвращает данные для отображения в указанной ячейке</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:51</div></div>
+<div class="ttc" id="aclass_reader_model_html_a83b0d0f87ac8774125f3c226e4e001fe"><div class="ttname"><a href="class_reader_model.html#a83b0d0f87ac8774125f3c226e4e001fe">ReaderModel::rowCount</a></div><div class="ttdeci">int rowCount(const QModelIndex &amp;parent=QModelIndex()) const override</div><div class="ttdoc">Возвращает количество строк в модели</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:32</div></div>
+<div class="ttc" id="aclass_reader_model_html_a8a5fe62c6fd7e4d7c2ed1aa79b1ed31a"><div class="ttname"><a href="class_reader_model.html#a8a5fe62c6fd7e4d7c2ed1aa79b1ed31a">ReaderModel::AddReader</a></div><div class="ttdeci">void AddReader(const Reader &amp;reader)</div><div class="ttdoc">Добавляет нового читателя в модель</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:95</div></div>
+<div class="ttc" id="aclass_reader_model_html_aed15758983457ab2c6fb5dcb48ad8f1d"><div class="ttname"><a href="class_reader_model.html#aed15758983457ab2c6fb5dcb48ad8f1d">ReaderModel::SaveToFile</a></div><div class="ttdeci">bool SaveToFile(const QString &amp;filePath)</div><div class="ttdoc">Сохраняет список читателей в файл</div><div class="ttdef"><b>Определения</b> ReaderModel.cpp:188</div></div>
+<div class="ttc" id="astruct_reader_html"><div class="ttname"><a href="struct_reader.html">Reader</a></div><div class="ttdoc">Структура для хранения информации о читателе</div><div class="ttdef"><b>Определения</b> ReaderModel.h:32</div></div>
+<div class="ttc" id="astruct_reader_html_a3d9a988d2fb18391ebc5225de147db6a"><div class="ttname"><a href="struct_reader.html#a3d9a988d2fb18391ebc5225de147db6a">Reader::ID</a></div><div class="ttdeci">QString ID</div><div class="ttdoc">Уникальный идентификатор читателя</div><div class="ttdef"><b>Определения</b> ReaderModel.h:33</div></div>
+<div class="ttc" id="astruct_reader_html_a634c62a76311232b15973965a27ab737"><div class="ttname"><a href="struct_reader.html#a634c62a76311232b15973965a27ab737">Reader::second_name</a></div><div class="ttdeci">QString second_name</div><div class="ttdoc">Фамилия читателя</div><div class="ttdef"><b>Определения</b> ReaderModel.h:35</div></div>
+<div class="ttc" id="astruct_reader_html_a651121aa6f81cab627297d5092b079de"><div class="ttname"><a href="struct_reader.html#a651121aa6f81cab627297d5092b079de">Reader::third_name</a></div><div class="ttdeci">QString third_name</div><div class="ttdoc">Отчество читателя</div><div class="ttdef"><b>Определения</b> ReaderModel.h:36</div></div>
+<div class="ttc" id="astruct_reader_html_a660fb20f6830d33a58c4f96ab093335e"><div class="ttname"><a href="struct_reader.html#a660fb20f6830d33a58c4f96ab093335e">Reader::first_name</a></div><div class="ttdeci">QString first_name</div><div class="ttdoc">Имя читателя</div><div class="ttdef"><b>Определения</b> ReaderModel.h:34</div></div>
+<div class="ttc" id="astruct_reader_html_a93b644bd1bccd070952a5d7648201348"><div class="ttname"><a href="struct_reader.html#a93b644bd1bccd070952a5d7648201348">Reader::gender</a></div><div class="ttdeci">Sex gender</div><div class="ttdoc">Пол читателя</div><div class="ttdef"><b>Определения</b> ReaderModel.h:37</div></div>
+<div class="ttc" id="astruct_reader_html_af945b2b26a402b97c09e9ad68969b028"><div class="ttname"><a href="struct_reader.html#af945b2b26a402b97c09e9ad68969b028">Reader::taken_books</a></div><div class="ttdeci">QList&lt; QString &gt; taken_books</div><div class="ttdoc">Список кодов взятых книг</div><div class="ttdef"><b>Определения</b> ReaderModel.h:38</div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+</div><!-- container -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a href="_reader_model_8h.html">ReaderModel.h</a></li>
+    <li class="footer">Создано системой <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.14.0 </li>
+  </ul>
+</div>
+</body>
+</html>

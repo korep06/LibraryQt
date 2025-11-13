@@ -1,0 +1,273 @@
+\doxysection{Класс Reader\+Model}
+\hypertarget{class_reader_model}{}\label{class_reader_model}\index{ReaderModel@{ReaderModel}}
+
+
+Модель для отображения и управления списком читателей в табличном виде  
+
+
+
+
+{\ttfamily \#include $<$Reader\+Model.\+h$>$}
+
+Граф наследования\+:Reader\+Model\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{class_reader_model}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Открытые члены}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_reader_model_a33772a8e085267fb694806e931967fd7}{Reader\+Model}} (QList$<$ \mbox{\hyperlink{struct_reader}{Reader}} $>$ \&readers, QObject \texorpdfstring{$\ast$}{*}parent=nullptr)
+\begin{DoxyCompactList}\small\item\em Конструктор модели читателей \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{class_reader_model_a83b0d0f87ac8774125f3c226e4e001fe}{row\+Count}} (const QModel\+Index \&parent=QModel\+Index()) const override
+\begin{DoxyCompactList}\small\item\em Возвращает количество строк в модели \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{class_reader_model_a29eea846ad15ace9239e2546363a91eb}{column\+Count}} (const QModel\+Index \&parent=QModel\+Index()) const override
+\begin{DoxyCompactList}\small\item\em Возвращает количество столбцов в модели \end{DoxyCompactList}\item 
+QVariant \mbox{\hyperlink{class_reader_model_a79bb21c87fcdea4f89f376480f2016f4}{data}} (const QModel\+Index \&index, int role=Qt\+::\+Display\+Role) const override
+\begin{DoxyCompactList}\small\item\em Возвращает данные для отображения в указанной ячейке \end{DoxyCompactList}\item 
+QVariant \mbox{\hyperlink{class_reader_model_a608fd4aed2c0f534e2a5cd49f666c7b4}{header\+Data}} (int section, Qt\+::\+Orientation orientation, int role=Qt\+::\+Display\+Role) const override
+\begin{DoxyCompactList}\small\item\em Возвращает заголовки для столбцов и строк \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_reader_model_a8a5fe62c6fd7e4d7c2ed1aa79b1ed31a}{Add\+Reader}} (const \mbox{\hyperlink{struct_reader}{Reader}} \&reader)
+\begin{DoxyCompactList}\small\item\em Добавляет нового читателя в модель \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_reader_model_a1831eba6938fb64823923b31e7f4f652}{Remove\+Reader}} (const QString \&id)
+\begin{DoxyCompactList}\small\item\em Удаляет читателя из модели по идентификатору \end{DoxyCompactList}\item 
+std\+::optional$<$ \mbox{\hyperlink{struct_reader}{Reader}} $>$ \mbox{\hyperlink{class_reader_model_a0b2e44fe511357263a0cfe74ea28433a}{Find\+Reader}} (const QString \&id)
+\begin{DoxyCompactList}\small\item\em Находит читателя по идентификатору \end{DoxyCompactList}\item 
+const QList$<$ \mbox{\hyperlink{struct_reader}{Reader}} $>$ \mbox{\hyperlink{class_reader_model_a284f1d60304ada8e05773ef6a3470bcd}{Get\+Readers}} () const
+\begin{DoxyCompactList}\small\item\em Возвращает копию списка читателей \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_reader_model_a123191d84940f7e52040760805b9797e}{Load\+From\+File}} (const QString \&file\+Path)
+\begin{DoxyCompactList}\small\item\em Загружает список читателей из файла \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_reader_model_aed15758983457ab2c6fb5dcb48ad8f1d}{Save\+To\+File}} (const QString \&file\+Path)
+\begin{DoxyCompactList}\small\item\em Сохраняет список читателей в файл \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Подробное описание}
+Модель для отображения и управления списком читателей в табличном виде 
+
+Наследует QAbstract\+Table\+Model для интеграции с Qt View/\+Model архитектурой. Обеспечивает работу с данными читателей библиотеки. 
+
+\label{doc-constructors}
+\Hypertarget{class_reader_model_doc-constructors}
+\doxysubsection{Конструктор(ы)}
+\Hypertarget{class_reader_model_a33772a8e085267fb694806e931967fd7}\index{ReaderModel@{ReaderModel}!ReaderModel@{ReaderModel}}
+\index{ReaderModel@{ReaderModel}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{ReaderModel()}{ReaderModel()}}
+{\footnotesize\ttfamily \label{class_reader_model_a33772a8e085267fb694806e931967fd7} 
+Reader\+Model\+::\+Reader\+Model (\begin{DoxyParamCaption}\item[{QList$<$ \mbox{\hyperlink{struct_reader}{Reader}} $>$ \&}]{readers}{, }\item[{QObject \texorpdfstring{$\ast$}{*}}]{parent}{ = {\ttfamily nullptr}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [explicit]}}
+
+
+
+Конструктор модели читателей 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em readers} & Ссылка на список читателей для инициализации модели \\
+\hline
+{\em parent} & Родительский объект в иерархии Qt \\
+\hline
+\end{DoxyParams}
+
+
+\label{doc-func-members}
+\Hypertarget{class_reader_model_doc-func-members}
+\doxysubsection{Методы}
+\Hypertarget{class_reader_model_a8a5fe62c6fd7e4d7c2ed1aa79b1ed31a}\index{ReaderModel@{ReaderModel}!AddReader@{AddReader}}
+\index{AddReader@{AddReader}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{AddReader()}{AddReader()}}
+{\footnotesize\ttfamily \label{class_reader_model_a8a5fe62c6fd7e4d7c2ed1aa79b1ed31a} 
+void Reader\+Model\+::\+Add\+Reader (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{struct_reader}{Reader}} \&}]{reader}{}\end{DoxyParamCaption})}
+
+
+
+Добавляет нового читателя в модель 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em reader} & Читатель для добавления \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_reader_model_a29eea846ad15ace9239e2546363a91eb}\index{ReaderModel@{ReaderModel}!columnCount@{columnCount}}
+\index{columnCount@{columnCount}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{columnCount()}{columnCount()}}
+{\footnotesize\ttfamily \label{class_reader_model_a29eea846ad15ace9239e2546363a91eb} 
+int Reader\+Model\+::column\+Count (\begin{DoxyParamCaption}\item[{const QModel\+Index \&}]{parent}{ = {\ttfamily QModelIndex()}}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Возвращает количество столбцов в модели 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em parent} & Родительский индекс (не используется для табличных моделей) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+Количество столбцов (полей читателя) 
+\end{DoxyReturn}
+\texorpdfstring{$<$}{<} Колонки\+: ID, Name, count\+\_\+taken\+\_\+books, taken\+\_\+books\Hypertarget{class_reader_model_a79bb21c87fcdea4f89f376480f2016f4}\index{ReaderModel@{ReaderModel}!data@{data}}
+\index{data@{data}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{data()}{data()}}
+{\footnotesize\ttfamily \label{class_reader_model_a79bb21c87fcdea4f89f376480f2016f4} 
+QVariant Reader\+Model\+::data (\begin{DoxyParamCaption}\item[{const QModel\+Index \&}]{index}{, }\item[{int}]{role}{ = {\ttfamily Qt\+:\+:DisplayRole}}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Возвращает данные для отображения в указанной ячейке 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em index} & Индекс ячейки (строка, столбец) \\
+\hline
+{\em role} & Роль данных (отображение, редактирование и т.\+д.) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+Данные для указанной ячейки и роли 
+\end{DoxyReturn}
+\texorpdfstring{$<$}{<} ID читателя
+
+\texorpdfstring{$<$}{<} Полное ФИО
+
+\texorpdfstring{$<$}{<} Количество взятых книг
+
+\texorpdfstring{$<$}{<} Список кодов взятых книг\Hypertarget{class_reader_model_a0b2e44fe511357263a0cfe74ea28433a}\index{ReaderModel@{ReaderModel}!FindReader@{FindReader}}
+\index{FindReader@{FindReader}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{FindReader()}{FindReader()}}
+{\footnotesize\ttfamily \label{class_reader_model_a0b2e44fe511357263a0cfe74ea28433a} 
+std\+::optional$<$ \mbox{\hyperlink{struct_reader}{Reader}} $>$ Reader\+Model\+::\+Find\+Reader (\begin{DoxyParamCaption}\item[{const QString \&}]{id}{}\end{DoxyParamCaption})}
+
+
+
+Находит читателя по идентификатору 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em id} & Уникальный идентификатор читателя для поиска \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+std\+::optional с найденным читателем или std\+::nullopt если не найден 
+\end{DoxyReturn}
+\texorpdfstring{$<$}{<} Пустое значение, если читатель не найден\Hypertarget{class_reader_model_a284f1d60304ada8e05773ef6a3470bcd}\index{ReaderModel@{ReaderModel}!GetReaders@{GetReaders}}
+\index{GetReaders@{GetReaders}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{GetReaders()}{GetReaders()}}
+{\footnotesize\ttfamily \label{class_reader_model_a284f1d60304ada8e05773ef6a3470bcd} 
+const QList$<$ \mbox{\hyperlink{struct_reader}{Reader}} $>$ Reader\+Model\+::\+Get\+Readers (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const}
+
+
+
+Возвращает копию списка читателей 
+
+\begin{DoxyReturn}{Возвращает}
+Копия списка всех читателей 
+\end{DoxyReturn}
+\Hypertarget{class_reader_model_a608fd4aed2c0f534e2a5cd49f666c7b4}\index{ReaderModel@{ReaderModel}!headerData@{headerData}}
+\index{headerData@{headerData}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{headerData()}{headerData()}}
+{\footnotesize\ttfamily \label{class_reader_model_a608fd4aed2c0f534e2a5cd49f666c7b4} 
+QVariant Reader\+Model\+::header\+Data (\begin{DoxyParamCaption}\item[{int}]{section}{, }\item[{Qt\+::\+Orientation}]{orientation}{, }\item[{int}]{role}{ = {\ttfamily Qt\+:\+:DisplayRole}}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Возвращает заголовки для столбцов и строк 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em section} & Номер секции (столбца или строки) \\
+\hline
+{\em orientation} & Ориентация заголовка (горизонтальный или вертикальный) \\
+\hline
+{\em role} & Роль данных заголовка \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+Данные заголовка для указанной секции 
+\end{DoxyReturn}
+\texorpdfstring{$<$}{<} Заголовок для идентификатора
+
+\texorpdfstring{$<$}{<} Заголовок для полного имени
+
+\texorpdfstring{$<$}{<} Заголовок для количества книг
+
+\texorpdfstring{$<$}{<} Заголовок для списка книг\Hypertarget{class_reader_model_a123191d84940f7e52040760805b9797e}\index{ReaderModel@{ReaderModel}!LoadFromFile@{LoadFromFile}}
+\index{LoadFromFile@{LoadFromFile}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{LoadFromFile()}{LoadFromFile()}}
+{\footnotesize\ttfamily \label{class_reader_model_a123191d84940f7e52040760805b9797e} 
+bool Reader\+Model\+::\+Load\+From\+File (\begin{DoxyParamCaption}\item[{const QString \&}]{file\+Path}{}\end{DoxyParamCaption})}
+
+
+
+Загружает список читателей из файла 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em file\+Path} & Путь к файлу для загрузки \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+true если загрузка успешна, false в случае ошибки 
+\end{DoxyReturn}
+\Hypertarget{class_reader_model_a1831eba6938fb64823923b31e7f4f652}\index{ReaderModel@{ReaderModel}!RemoveReader@{RemoveReader}}
+\index{RemoveReader@{RemoveReader}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{RemoveReader()}{RemoveReader()}}
+{\footnotesize\ttfamily \label{class_reader_model_a1831eba6938fb64823923b31e7f4f652} 
+void Reader\+Model\+::\+Remove\+Reader (\begin{DoxyParamCaption}\item[{const QString \&}]{id}{}\end{DoxyParamCaption})}
+
+
+
+Удаляет читателя из модели по идентификатору 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em id} & Уникальный идентификатор читателя для удаления \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_reader_model_a83b0d0f87ac8774125f3c226e4e001fe}\index{ReaderModel@{ReaderModel}!rowCount@{rowCount}}
+\index{rowCount@{rowCount}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{rowCount()}{rowCount()}}
+{\footnotesize\ttfamily \label{class_reader_model_a83b0d0f87ac8774125f3c226e4e001fe} 
+int Reader\+Model\+::row\+Count (\begin{DoxyParamCaption}\item[{const QModel\+Index \&}]{parent}{ = {\ttfamily QModelIndex()}}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Возвращает количество строк в модели 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em parent} & Родительский индекс (не используется для табличных моделей) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+Количество читателей в модели 
+\end{DoxyReturn}
+\Hypertarget{class_reader_model_aed15758983457ab2c6fb5dcb48ad8f1d}\index{ReaderModel@{ReaderModel}!SaveToFile@{SaveToFile}}
+\index{SaveToFile@{SaveToFile}!ReaderModel@{ReaderModel}}
+\doxysubsubsection{\texorpdfstring{SaveToFile()}{SaveToFile()}}
+{\footnotesize\ttfamily \label{class_reader_model_aed15758983457ab2c6fb5dcb48ad8f1d} 
+bool Reader\+Model\+::\+Save\+To\+File (\begin{DoxyParamCaption}\item[{const QString \&}]{file\+Path}{}\end{DoxyParamCaption})}
+
+
+
+Сохраняет список читателей в файл 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em file\+Path} & Путь к файлу для сохранения \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+true если сохранение успешно, false в случае ошибки 
+\end{DoxyReturn}
+\texorpdfstring{$<$}{<} Добавляем каждый ID книги в массив
+
+\texorpdfstring{$<$}{<} Присваиваем массив книг объекту
+
+\texorpdfstring{$<$}{<} Indented для читаемого формата
+
+\texorpdfstring{$<$}{<} Закрываем файл
+
+Объявления и описания членов классов находятся в файлах\+:\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{_reader_model_8h}{Reader\+Model.\+h}}\item 
+\mbox{\hyperlink{_reader_model_8cpp}{Reader\+Model.\+cpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/icons/button">
+        <file>img/save.png</file>
+        <file>img/add.png</file>
+        <file>img/downloads.png</file>
+        <file>img/edit.png</file>
+        <file>img/remove.png</file>
+        <file>img/search.png</file>
+        <file>img/user.png</file>
+        <file>img/getbook.png</file>
+        <file>img/getbook1.png</file>
+        <file>img/givebook.png</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,62 @@
+\doxysection{Reader\+Model.\+h}
+\hypertarget{_reader_model_8h_source}{}\label{_reader_model_8h_source}\mbox{\hyperlink{_reader_model_8h}{См. документацию.}}
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ }
+\DoxyCodeLine{00008\ }
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#ifndef\ READERMODEL\_H}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#define\ READERMODEL\_H}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <QString>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <QList>}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#include\ <optional>}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#include\ <QAbstractTableModel>}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{enum}\ \mbox{\hyperlink{_reader_model_8h_a2633cb393c68bb2ee8080db58fb7ba93}{Sex}}\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \mbox{\hyperlink{_reader_model_8h_a2633cb393c68bb2ee8080db58fb7ba93a4fcdc3f409e8e27fbfd35bbd6472877c}{Female}},\ }
+\DoxyCodeLine{00025\ \ \ \ \ \mbox{\hyperlink{_reader_model_8h_a2633cb393c68bb2ee8080db58fb7ba93adfdd236ca597df5a4d2f5fa0d0f6ec93}{Male}},\ \ \ }
+\DoxyCodeLine{00026\ \};}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{struct_reader}{Reader}}\ \{}
+\DoxyCodeLine{00033\ \ \ \ \ QString\ \mbox{\hyperlink{struct_reader_a3d9a988d2fb18391ebc5225de147db6a}{ID}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00034\ \ \ \ \ QString\ \mbox{\hyperlink{struct_reader_a660fb20f6830d33a58c4f96ab093335e}{first\_name}};\ \ \ \ \ \ }
+\DoxyCodeLine{00035\ \ \ \ \ QString\ \mbox{\hyperlink{struct_reader_a634c62a76311232b15973965a27ab737}{second\_name}};\ \ \ \ \ }
+\DoxyCodeLine{00036\ \ \ \ \ QString\ \mbox{\hyperlink{struct_reader_a651121aa6f81cab627297d5092b079de}{third\_name}};\ \ \ \ \ \ }
+\DoxyCodeLine{00037\ \ \ \ \ \mbox{\hyperlink{_reader_model_8h_a2633cb393c68bb2ee8080db58fb7ba93}{Sex}}\ \mbox{\hyperlink{struct_reader_a93b644bd1bccd070952a5d7648201348}{gender}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00038\ \ \ \ \ QList<QString>\ \mbox{\hyperlink{struct_reader_af945b2b26a402b97c09e9ad68969b028}{taken\_books}};\ }
+\DoxyCodeLine{00039\ \};}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{class\ }\mbox{\hyperlink{class_reader_model_a33772a8e085267fb694806e931967fd7}{ReaderModel}}\ :\ \textcolor{keyword}{public}\ QAbstractTableModel\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ Q\_OBJECT}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{class_reader_model_a33772a8e085267fb694806e931967fd7}{ReaderModel}}(QList<Reader>\&\ readers,\ QObject*\ parent\ =\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{class_reader_model_a83b0d0f87ac8774125f3c226e4e001fe}{rowCount}}(\textcolor{keyword}{const}\ QModelIndex\ \&parent\ =\ QModelIndex())\ \textcolor{keyword}{const\ override};}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{class_reader_model_a29eea846ad15ace9239e2546363a91eb}{columnCount}}(\textcolor{keyword}{const}\ QModelIndex\ \&parent\ =\ QModelIndex())\ \textcolor{keyword}{const\ override};}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00079\ \ \ \ \ QVariant\ \mbox{\hyperlink{class_reader_model_a79bb21c87fcdea4f89f376480f2016f4}{data}}(\textcolor{keyword}{const}\ QModelIndex\ \&index,\ \textcolor{keywordtype}{int}\ role\ =\ Qt::DisplayRole)\ \textcolor{keyword}{const\ override};}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00088\ \ \ \ \ QVariant\ \mbox{\hyperlink{class_reader_model_a608fd4aed2c0f534e2a5cd49f666c7b4}{headerData}}(\textcolor{keywordtype}{int}\ section,\ Qt::Orientation\ orientation,\ \textcolor{keywordtype}{int}\ role\ =\ Qt::DisplayRole)\ \textcolor{keyword}{const\ override};}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_reader_model_a8a5fe62c6fd7e4d7c2ed1aa79b1ed31a}{AddReader}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{struct_reader}{Reader}}\&\ reader);}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{class_reader_model_a1831eba6938fb64823923b31e7f4f652}{RemoveReader}}(\textcolor{keyword}{const}\ QString\&\ \textcolor{keywordtype}{id});}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00107\ \ \ \ \ std::optional<Reader>\ \mbox{\hyperlink{class_reader_model_a0b2e44fe511357263a0cfe74ea28433a}{FindReader}}(\textcolor{keyword}{const}\ QString\&\ \textcolor{keywordtype}{id});}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{const}\ QList<Reader>\ \mbox{\hyperlink{class_reader_model_a284f1d60304ada8e05773ef6a3470bcd}{GetReaders}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_reader_model_a123191d84940f7e52040760805b9797e}{LoadFromFile}}(\textcolor{keyword}{const}\ QString\&\ filePath);}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{class_reader_model_aed15758983457ab2c6fb5dcb48ad8f1d}{SaveToFile}}(\textcolor{keyword}{const}\ QString\&\ filePath);}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00130\ \ \ \ \ QList<Reader>\ readers\_;\ }
+\DoxyCodeLine{00131\ \};}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ READERMODEL\_H}}
+
+\end{DoxyCode}

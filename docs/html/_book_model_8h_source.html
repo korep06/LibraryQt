@@ -1,0 +1,181 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "https://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ru">
+<head>
+<meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=11"/>
+<meta name="generator" content="Doxygen 1.14.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>LibraryQt: Исходный файл BookModel.h</title>
+<link href="tabs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="clipboard.js"></script>
+<link href="navtree.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="navtreedata.js"></script>
+<script type="text/javascript" src="navtree.js"></script>
+<script type="text/javascript" src="cookie.js"></script>
+<link href="search/search.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="search/searchdata.js"></script>
+<script type="text/javascript" src="search/search.js"></script>
+<link href="doxygen.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+<div id="top"><!-- do not remove this div, it is closed by doxygen! -->
+<div id="titlearea">
+<table cellspacing="0" cellpadding="0">
+ <tbody>
+ <tr id="projectrow">
+  <td id="projectalign">
+   <div id="projectname">LibraryQt<span id="projectnumber">&#160;1</span>
+   </div>
+  </td>
+ </tr>
+ </tbody>
+</table>
+</div>
+<!-- end header part -->
+<!-- Создано системой Doxygen 1.14.0 -->
+<script type="text/javascript">
+var searchBox = new SearchBox("searchBox", "search/",'.html');
+</script>
+<script type="text/javascript">
+$(function() { codefold.init(); });
+</script>
+<script type="text/javascript" src="menudata.js"></script>
+<script type="text/javascript" src="menu.js"></script>
+<script type="text/javascript">
+$(function() {
+  initMenu('',true,false,'search.php','Поиск',true);
+  $(function() { init_search(); });
+});
+</script>
+<div id="main-nav"></div>
+</div><!-- top -->
+<div id="side-nav" class="ui-resizable side-nav-resizable">
+  <div id="nav-tree">
+    <div id="nav-tree-contents">
+      <div id="nav-sync" class="sync"></div>
+    </div>
+  </div>
+  <div id="splitbar" style="-moz-user-select:none;" 
+       class="ui-resizable-handle">
+  </div>
+</div>
+<script type="text/javascript">
+$(function(){initNavTree('_book_model_8h_source.html','',''); });
+</script>
+<div id="container">
+<div id="doc-content">
+<!-- window showing the filter options -->
+<div id="MSearchSelectWindow"
+     onmouseover="return searchBox.OnSearchSelectShow()"
+     onmouseout="return searchBox.OnSearchSelectHide()"
+     onkeydown="return searchBox.OnSearchSelectKey(event)">
+</div>
+
+<!-- iframe showing the search results (closed by default) -->
+<div id="MSearchResultsWindow">
+<div id="MSearchResults">
+<div class="SRPage">
+<div id="SRIndex">
+<div id="SRResults"></div>
+<div class="SRStatus" id="Loading">Загрузка...</div>
+<div class="SRStatus" id="Searching">Поиск...</div>
+<div class="SRStatus" id="NoMatches">Не найдено</div>
+</div>
+</div>
+</div>
+</div>
+
+<div class="header">
+  <div class="headertitle"><div class="title">BookModel.h</div></div>
+</div><!--header-->
+<div class="contents">
+<a href="_book_model_8h.html">См. документацию.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#ifndef BOOKMODEL_H</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#define BOOKMODEL_H</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span> </div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#pragma once</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span> </div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="preprocessor">#include &lt;iostream&gt;</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="preprocessor">#include &lt;deque&gt;</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="preprocessor">#include &lt;QList&gt;</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="preprocessor">#include &lt;QString&gt;</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="preprocessor">#include &lt;QAbstractItemModel&gt;</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="preprocessor">#include &lt;QDate&gt;</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span></div>
+<div class="foldopen" id="foldopen00027" data-start="{" data-end="};">
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="struct_book.html">   27</a></span><span class="keyword">struct </span><a class="code hl_struct" href="struct_book.html">Book</a> {</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno"><a class="line" href="struct_book.html#a0e6552509d3e15253958bf0c23f8b559">   28</a></span>    QString <a class="code hl_variable" href="struct_book.html#a0e6552509d3e15253958bf0c23f8b559">code</a>;                </div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno"><a class="line" href="struct_book.html#a05cf01fd41887427726e87e22dff5bd8">   29</a></span>    QString <a class="code hl_variable" href="struct_book.html#a05cf01fd41887427726e87e22dff5bd8">name</a>;                </div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="struct_book.html#a2d1d0082b8b0f6ef3c197a31683f2733">   30</a></span>    QString <a class="code hl_variable" href="struct_book.html#a2d1d0082b8b0f6ef3c197a31683f2733">author</a>;              </div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno"><a class="line" href="struct_book.html#a73857f433ff055d08eb868be4dd9498d">   31</a></span>    <span class="keywordtype">bool</span> <a class="code hl_variable" href="struct_book.html#a73857f433ff055d08eb868be4dd9498d">is_taken</a>;               </div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="struct_book.html#a711450a73979f889a16fb0630129c872">   32</a></span>    std::optional&lt;QDate&gt; <a class="code hl_variable" href="struct_book.html#a711450a73979f889a16fb0630129c872">date_taken</a>; </div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>};</div>
+</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span></div>
+<div class="foldopen" id="foldopen00041" data-start="{" data-end="};">
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno"><a class="line" href="class_book_model.html">   41</a></span><span class="keyword">class </span><a class="code hl_function" href="class_book_model.html#aee3a991be526972efa22f371f4f7e1ad">BookModel</a> : <span class="keyword">public</span> QAbstractTableModel {</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    Q_OBJECT</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span> </div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <span class="keyword">explicit</span> <a class="code hl_function" href="class_book_model.html#aee3a991be526972efa22f371f4f7e1ad">BookModel</a>(QList&lt;Book&gt;&amp; books, QObject* parent = <span class="keyword">nullptr</span>);</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span></div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keywordtype">int</span> <a class="code hl_function" href="class_book_model.html#a3f31dc43225c33c6b5e202294e0013f0">rowCount</a>(<span class="keyword">const</span> QModelIndex&amp; parent = QModelIndex()) <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>    <span class="keywordtype">int</span> <a class="code hl_function" href="class_book_model.html#a6920054c8bc496f7a3c44536d69e087b">columnCount</a>(<span class="keyword">const</span> QModelIndex&amp; parent = QModelIndex()) <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span></div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>    QVariant <a class="code hl_function" href="class_book_model.html#a811196dec0297e04fe2639d3dda2df59">data</a>(<span class="keyword">const</span> QModelIndex&amp; index, <span class="keywordtype">int</span> role = Qt::DisplayRole) <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span></div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    QVariant <a class="code hl_function" href="class_book_model.html#a60e945fb4aaacd826fd5ea9b57eace8d">headerData</a>(<span class="keywordtype">int</span> section, Qt::Orientation orientation, <span class="keywordtype">int</span> role = Qt::DisplayRole) <span class="keyword">const override</span>;</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span></div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="class_book_model.html#a9587caab88db3d4f5c9c28399efdf6ba">AddBook</a>(<span class="keyword">const</span> <a class="code hl_struct" href="struct_book.html">Book</a>&amp; book);</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span></div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    <span class="keywordtype">void</span> <a class="code hl_function" href="class_book_model.html#ae434cea701a6198107823dfe791ba78d">RemoveBook</a>(<span class="keyword">const</span> QString&amp; code);</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    <a class="code hl_struct" href="struct_book.html">Book</a> <a class="code hl_function" href="class_book_model.html#aefd021d19146c3f26b03de935d5ea774">FindBook</a>(<span class="keyword">const</span> QString&amp; code) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span></div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keyword">const</span> QList&lt;Book&gt;&amp; <a class="code hl_function" href="class_book_model.html#ac4ab40f339e423d03e85cf72823ce3c6">GetBooks</a>() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span></div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="class_book_model.html#aeffa7435c761c63c77955c488299de3d">SaveToFile</a>(<span class="keyword">const</span> QString&amp; filePath) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span></div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    <span class="keywordtype">bool</span> <a class="code hl_function" href="class_book_model.html#abbbece811df830d032cc19bf0accdb65">LoadFromFile</a>(<span class="keyword">const</span> QString&amp; filePath);</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    QList&lt;Book&gt; books_; </div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>};</div>
+</div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span> </div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span><span class="preprocessor">#endif </span><span class="comment">// BOOKMODEL_H</span></div>
+<div class="ttc" id="aclass_book_model_html_a3f31dc43225c33c6b5e202294e0013f0"><div class="ttname"><a href="class_book_model.html#a3f31dc43225c33c6b5e202294e0013f0">BookModel::rowCount</a></div><div class="ttdeci">int rowCount(const QModelIndex &amp;parent=QModelIndex()) const override</div><div class="ttdoc">Возвращает количество строк в модели</div><div class="ttdef"><b>Определения</b> BookModel.cpp:32</div></div>
+<div class="ttc" id="aclass_book_model_html_a60e945fb4aaacd826fd5ea9b57eace8d"><div class="ttname"><a href="class_book_model.html#a60e945fb4aaacd826fd5ea9b57eace8d">BookModel::headerData</a></div><div class="ttdeci">QVariant headerData(int section, Qt::Orientation orientation, int role=Qt::DisplayRole) const override</div><div class="ttdoc">Возвращает заголовки для столбцов и строк</div><div class="ttdef"><b>Определения</b> BookModel.cpp:79</div></div>
+<div class="ttc" id="aclass_book_model_html_a6920054c8bc496f7a3c44536d69e087b"><div class="ttname"><a href="class_book_model.html#a6920054c8bc496f7a3c44536d69e087b">BookModel::columnCount</a></div><div class="ttdeci">int columnCount(const QModelIndex &amp;parent=QModelIndex()) const override</div><div class="ttdoc">Возвращает количество столбцов в модели</div><div class="ttdef"><b>Определения</b> BookModel.cpp:41</div></div>
+<div class="ttc" id="aclass_book_model_html_a811196dec0297e04fe2639d3dda2df59"><div class="ttname"><a href="class_book_model.html#a811196dec0297e04fe2639d3dda2df59">BookModel::data</a></div><div class="ttdeci">QVariant data(const QModelIndex &amp;index, int role=Qt::DisplayRole) const override</div><div class="ttdoc">Возвращает данные для отображения в указанной ячейке</div><div class="ttdef"><b>Определения</b> BookModel.cpp:51</div></div>
+<div class="ttc" id="aclass_book_model_html_a9587caab88db3d4f5c9c28399efdf6ba"><div class="ttname"><a href="class_book_model.html#a9587caab88db3d4f5c9c28399efdf6ba">BookModel::AddBook</a></div><div class="ttdeci">void AddBook(const Book &amp;book)</div><div class="ttdoc">Добавляет новую книгу в модель</div><div class="ttdef"><b>Определения</b> BookModel.cpp:99</div></div>
+<div class="ttc" id="aclass_book_model_html_abbbece811df830d032cc19bf0accdb65"><div class="ttname"><a href="class_book_model.html#abbbece811df830d032cc19bf0accdb65">BookModel::LoadFromFile</a></div><div class="ttdeci">bool LoadFromFile(const QString &amp;filePath)</div><div class="ttdoc">Загружает список книг из файла</div><div class="ttdef"><b>Определения</b> BookModel.cpp:147</div></div>
+<div class="ttc" id="aclass_book_model_html_ac4ab40f339e423d03e85cf72823ce3c6"><div class="ttname"><a href="class_book_model.html#ac4ab40f339e423d03e85cf72823ce3c6">BookModel::GetBooks</a></div><div class="ttdeci">const QList&lt; Book &gt; &amp; GetBooks() const</div><div class="ttdoc">Возвращает константную ссылку на список книг</div><div class="ttdef"><b>Определения</b> BookModel.cpp:138</div></div>
+<div class="ttc" id="aclass_book_model_html_ae434cea701a6198107823dfe791ba78d"><div class="ttname"><a href="class_book_model.html#ae434cea701a6198107823dfe791ba78d">BookModel::RemoveBook</a></div><div class="ttdeci">void RemoveBook(const QString &amp;code)</div><div class="ttdoc">Удаляет книгу из модели по коду</div><div class="ttdef"><b>Определения</b> BookModel.cpp:109</div></div>
+<div class="ttc" id="aclass_book_model_html_aee3a991be526972efa22f371f4f7e1ad"><div class="ttname"><a href="class_book_model.html#aee3a991be526972efa22f371f4f7e1ad">BookModel::BookModel</a></div><div class="ttdeci">BookModel(QList&lt; Book &gt; &amp;books, QObject *parent=nullptr)</div><div class="ttdoc">Конструктор модели книг</div><div class="ttdef"><b>Определения</b> BookModel.cpp:24</div></div>
+<div class="ttc" id="aclass_book_model_html_aefd021d19146c3f26b03de935d5ea774"><div class="ttname"><a href="class_book_model.html#aefd021d19146c3f26b03de935d5ea774">BookModel::FindBook</a></div><div class="ttdeci">Book FindBook(const QString &amp;code) const</div><div class="ttdoc">Находит книгу по коду</div><div class="ttdef"><b>Определения</b> BookModel.cpp:125</div></div>
+<div class="ttc" id="aclass_book_model_html_aeffa7435c761c63c77955c488299de3d"><div class="ttname"><a href="class_book_model.html#aeffa7435c761c63c77955c488299de3d">BookModel::SaveToFile</a></div><div class="ttdeci">bool SaveToFile(const QString &amp;filePath) const</div><div class="ttdoc">Сохраняет список книг в файл</div><div class="ttdef"><b>Определения</b> BookModel.cpp:182</div></div>
+<div class="ttc" id="astruct_book_html"><div class="ttname"><a href="struct_book.html">Book</a></div><div class="ttdoc">Структура для хранения информации о книге</div><div class="ttdef"><b>Определения</b> BookModel.h:27</div></div>
+<div class="ttc" id="astruct_book_html_a05cf01fd41887427726e87e22dff5bd8"><div class="ttname"><a href="struct_book.html#a05cf01fd41887427726e87e22dff5bd8">Book::name</a></div><div class="ttdeci">QString name</div><div class="ttdoc">Название книги</div><div class="ttdef"><b>Определения</b> BookModel.h:29</div></div>
+<div class="ttc" id="astruct_book_html_a0e6552509d3e15253958bf0c23f8b559"><div class="ttname"><a href="struct_book.html#a0e6552509d3e15253958bf0c23f8b559">Book::code</a></div><div class="ttdeci">QString code</div><div class="ttdoc">Уникальный код книги</div><div class="ttdef"><b>Определения</b> BookModel.h:28</div></div>
+<div class="ttc" id="astruct_book_html_a2d1d0082b8b0f6ef3c197a31683f2733"><div class="ttname"><a href="struct_book.html#a2d1d0082b8b0f6ef3c197a31683f2733">Book::author</a></div><div class="ttdeci">QString author</div><div class="ttdoc">Автор книги</div><div class="ttdef"><b>Определения</b> BookModel.h:30</div></div>
+<div class="ttc" id="astruct_book_html_a711450a73979f889a16fb0630129c872"><div class="ttname"><a href="struct_book.html#a711450a73979f889a16fb0630129c872">Book::date_taken</a></div><div class="ttdeci">std::optional&lt; QDate &gt; date_taken</div><div class="ttdoc">Дата взятия книги (если книга взята)</div><div class="ttdef"><b>Определения</b> BookModel.h:32</div></div>
+<div class="ttc" id="astruct_book_html_a73857f433ff055d08eb868be4dd9498d"><div class="ttname"><a href="struct_book.html#a73857f433ff055d08eb868be4dd9498d">Book::is_taken</a></div><div class="ttdeci">bool is_taken</div><div class="ttdoc">Флаг взятия книги (true если книга взята)</div><div class="ttdef"><b>Определения</b> BookModel.h:31</div></div>
+</div><!-- fragment --></div><!-- contents -->
+</div><!-- doc-content -->
+</div><!-- container -->
+<!-- start footer part -->
+<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
+  <ul>
+    <li class="navelem"><a href="_book_model_8h.html">BookModel.h</a></li>
+    <li class="footer">Создано системой <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.14.0 </li>
+  </ul>
+</div>
+</body>
+</html>

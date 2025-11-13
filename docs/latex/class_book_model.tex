@@ -1,0 +1,271 @@
+\doxysection{Класс Book\+Model}
+\hypertarget{class_book_model}{}\label{class_book_model}\index{BookModel@{BookModel}}
+
+
+Модель для отображения и управления списком книг в табличном виде  
+
+
+
+
+{\ttfamily \#include $<$Book\+Model.\+h$>$}
+
+Граф наследования\+:Book\+Model\+:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=2.000000cm]{class_book_model}
+\end{center}
+\end{figure}
+\doxysubsubsection*{Открытые члены}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_book_model_aee3a991be526972efa22f371f4f7e1ad}{Book\+Model}} (QList$<$ \mbox{\hyperlink{struct_book}{Book}} $>$ \&books, QObject \texorpdfstring{$\ast$}{*}parent=nullptr)
+\begin{DoxyCompactList}\small\item\em Конструктор модели книг \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{class_book_model_a3f31dc43225c33c6b5e202294e0013f0}{row\+Count}} (const QModel\+Index \&parent=QModel\+Index()) const override
+\begin{DoxyCompactList}\small\item\em Возвращает количество строк в модели \end{DoxyCompactList}\item 
+int \mbox{\hyperlink{class_book_model_a6920054c8bc496f7a3c44536d69e087b}{column\+Count}} (const QModel\+Index \&parent=QModel\+Index()) const override
+\begin{DoxyCompactList}\small\item\em Возвращает количество столбцов в модели \end{DoxyCompactList}\item 
+QVariant \mbox{\hyperlink{class_book_model_a811196dec0297e04fe2639d3dda2df59}{data}} (const QModel\+Index \&index, int role=Qt\+::\+Display\+Role) const override
+\begin{DoxyCompactList}\small\item\em Возвращает данные для отображения в указанной ячейке \end{DoxyCompactList}\item 
+QVariant \mbox{\hyperlink{class_book_model_a60e945fb4aaacd826fd5ea9b57eace8d}{header\+Data}} (int section, Qt\+::\+Orientation orientation, int role=Qt\+::\+Display\+Role) const override
+\begin{DoxyCompactList}\small\item\em Возвращает заголовки для столбцов и строк \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_book_model_a9587caab88db3d4f5c9c28399efdf6ba}{Add\+Book}} (const \mbox{\hyperlink{struct_book}{Book}} \&book)
+\begin{DoxyCompactList}\small\item\em Добавляет новую книгу в модель \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_book_model_ae434cea701a6198107823dfe791ba78d}{Remove\+Book}} (const QString \&code)
+\begin{DoxyCompactList}\small\item\em Удаляет книгу из модели по коду \end{DoxyCompactList}\item 
+\mbox{\hyperlink{struct_book}{Book}} \mbox{\hyperlink{class_book_model_aefd021d19146c3f26b03de935d5ea774}{Find\+Book}} (const QString \&code) const
+\begin{DoxyCompactList}\small\item\em Находит книгу по коду \end{DoxyCompactList}\item 
+const QList$<$ \mbox{\hyperlink{struct_book}{Book}} $>$ \& \mbox{\hyperlink{class_book_model_ac4ab40f339e423d03e85cf72823ce3c6}{Get\+Books}} () const
+\begin{DoxyCompactList}\small\item\em Возвращает константную ссылку на список книг \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_book_model_aeffa7435c761c63c77955c488299de3d}{Save\+To\+File}} (const QString \&file\+Path) const
+\begin{DoxyCompactList}\small\item\em Сохраняет список книг в файл \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{class_book_model_abbbece811df830d032cc19bf0accdb65}{Load\+From\+File}} (const QString \&file\+Path)
+\begin{DoxyCompactList}\small\item\em Загружает список книг из файла \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Подробное описание}
+Модель для отображения и управления списком книг в табличном виде 
+
+Наследует QAbstract\+Table\+Model для интеграции с Qt View/\+Model архитектурой 
+
+\label{doc-constructors}
+\Hypertarget{class_book_model_doc-constructors}
+\doxysubsection{Конструктор(ы)}
+\Hypertarget{class_book_model_aee3a991be526972efa22f371f4f7e1ad}\index{BookModel@{BookModel}!BookModel@{BookModel}}
+\index{BookModel@{BookModel}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{BookModel()}{BookModel()}}
+{\footnotesize\ttfamily \label{class_book_model_aee3a991be526972efa22f371f4f7e1ad} 
+Book\+Model\+::\+Book\+Model (\begin{DoxyParamCaption}\item[{QList$<$ \mbox{\hyperlink{struct_book}{Book}} $>$ \&}]{books}{, }\item[{QObject \texorpdfstring{$\ast$}{*}}]{parent}{ = {\ttfamily nullptr}}\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [explicit]}}
+
+
+
+Конструктор модели книг 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em books} & Ссылка на список книг для инициализации модели \\
+\hline
+{\em parent} & Родительский объект в иерархии Qt \\
+\hline
+\end{DoxyParams}
+
+
+\label{doc-func-members}
+\Hypertarget{class_book_model_doc-func-members}
+\doxysubsection{Методы}
+\Hypertarget{class_book_model_a9587caab88db3d4f5c9c28399efdf6ba}\index{BookModel@{BookModel}!AddBook@{AddBook}}
+\index{AddBook@{AddBook}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{AddBook()}{AddBook()}}
+{\footnotesize\ttfamily \label{class_book_model_a9587caab88db3d4f5c9c28399efdf6ba} 
+void Book\+Model\+::\+Add\+Book (\begin{DoxyParamCaption}\item[{const \mbox{\hyperlink{struct_book}{Book}} \&}]{book}{}\end{DoxyParamCaption})}
+
+
+
+Добавляет новую книгу в модель 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em book} & Книга для добавления \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_book_model_a6920054c8bc496f7a3c44536d69e087b}\index{BookModel@{BookModel}!columnCount@{columnCount}}
+\index{columnCount@{columnCount}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{columnCount()}{columnCount()}}
+{\footnotesize\ttfamily \label{class_book_model_a6920054c8bc496f7a3c44536d69e087b} 
+int Book\+Model\+::column\+Count (\begin{DoxyParamCaption}\item[{const QModel\+Index \&}]{parent}{ = {\ttfamily QModelIndex()}}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Возвращает количество столбцов в модели 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em parent} & Родительский индекс (не используется для табличных моделей) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+Количество столбцов (полей книги) 
+\end{DoxyReturn}
+\texorpdfstring{$<$}{<} Колонки\+: ID, Name, Author, is\+\_\+taken, Date\Hypertarget{class_book_model_a811196dec0297e04fe2639d3dda2df59}\index{BookModel@{BookModel}!data@{data}}
+\index{data@{data}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{data()}{data()}}
+{\footnotesize\ttfamily \label{class_book_model_a811196dec0297e04fe2639d3dda2df59} 
+QVariant Book\+Model\+::data (\begin{DoxyParamCaption}\item[{const QModel\+Index \&}]{index}{, }\item[{int}]{role}{ = {\ttfamily Qt\+:\+:DisplayRole}}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Возвращает данные для отображения в указанной ячейке 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em index} & Индекс ячейки (строка, столбец) \\
+\hline
+{\em role} & Роль данных (отображение, редактирование и т.\+д.) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+Данные для указанной ячейки и роли 
+\end{DoxyReturn}
+\texorpdfstring{$<$}{<} Код книги
+
+\texorpdfstring{$<$}{<} Название книги
+
+\texorpdfstring{$<$}{<} Автор книги
+
+\texorpdfstring{$<$}{<} Статус наличия
+
+\texorpdfstring{$<$}{<} Дата выдачи\Hypertarget{class_book_model_aefd021d19146c3f26b03de935d5ea774}\index{BookModel@{BookModel}!FindBook@{FindBook}}
+\index{FindBook@{FindBook}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{FindBook()}{FindBook()}}
+{\footnotesize\ttfamily \label{class_book_model_aefd021d19146c3f26b03de935d5ea774} 
+\mbox{\hyperlink{struct_book}{Book}} Book\+Model\+::\+Find\+Book (\begin{DoxyParamCaption}\item[{const QString \&}]{code}{}\end{DoxyParamCaption}) const}
+
+
+
+Находит книгу по коду 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em code} & Уникальный код книги для поиска \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+Найденная книга или пустая книга если не найдена 
+\end{DoxyReturn}
+\texorpdfstring{$<$}{<} Пустая книга, если не найдено\Hypertarget{class_book_model_ac4ab40f339e423d03e85cf72823ce3c6}\index{BookModel@{BookModel}!GetBooks@{GetBooks}}
+\index{GetBooks@{GetBooks}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{GetBooks()}{GetBooks()}}
+{\footnotesize\ttfamily \label{class_book_model_ac4ab40f339e423d03e85cf72823ce3c6} 
+const QList$<$ \mbox{\hyperlink{struct_book}{Book}} $>$ \& Book\+Model\+::\+Get\+Books (\begin{DoxyParamCaption}{}{}\end{DoxyParamCaption}) const}
+
+
+
+Возвращает константную ссылку на список книг 
+
+\begin{DoxyReturn}{Возвращает}
+Константная ссылка на список всех книг 
+\end{DoxyReturn}
+\Hypertarget{class_book_model_a60e945fb4aaacd826fd5ea9b57eace8d}\index{BookModel@{BookModel}!headerData@{headerData}}
+\index{headerData@{headerData}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{headerData()}{headerData()}}
+{\footnotesize\ttfamily \label{class_book_model_a60e945fb4aaacd826fd5ea9b57eace8d} 
+QVariant Book\+Model\+::header\+Data (\begin{DoxyParamCaption}\item[{int}]{section}{, }\item[{Qt\+::\+Orientation}]{orientation}{, }\item[{int}]{role}{ = {\ttfamily Qt\+:\+:DisplayRole}}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Возвращает заголовки для столбцов и строк 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em section} & Номер секции (столбца или строки) \\
+\hline
+{\em orientation} & Ориентация заголовка (горизонтальный или вертикальный) \\
+\hline
+{\em role} & Роль данных заголовка \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+Данные заголовка для указанной секции 
+\end{DoxyReturn}
+\texorpdfstring{$<$}{<} Заголовок для кода книги
+
+\texorpdfstring{$<$}{<} Заголовок для названия книги
+
+\texorpdfstring{$<$}{<} Заголовок для автора книги
+
+\texorpdfstring{$<$}{<} Заголовок для статуса наличия
+
+\texorpdfstring{$<$}{<} Заголовок для даты выдачи\Hypertarget{class_book_model_abbbece811df830d032cc19bf0accdb65}\index{BookModel@{BookModel}!LoadFromFile@{LoadFromFile}}
+\index{LoadFromFile@{LoadFromFile}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{LoadFromFile()}{LoadFromFile()}}
+{\footnotesize\ttfamily \label{class_book_model_abbbece811df830d032cc19bf0accdb65} 
+bool Book\+Model\+::\+Load\+From\+File (\begin{DoxyParamCaption}\item[{const QString \&}]{file\+Path}{}\end{DoxyParamCaption})}
+
+
+
+Загружает список книг из файла 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em file\+Path} & Путь к файлу для загрузки \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+true если загрузка успешна, false в случае ошибки 
+\end{DoxyReturn}
+\Hypertarget{class_book_model_ae434cea701a6198107823dfe791ba78d}\index{BookModel@{BookModel}!RemoveBook@{RemoveBook}}
+\index{RemoveBook@{RemoveBook}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{RemoveBook()}{RemoveBook()}}
+{\footnotesize\ttfamily \label{class_book_model_ae434cea701a6198107823dfe791ba78d} 
+void Book\+Model\+::\+Remove\+Book (\begin{DoxyParamCaption}\item[{const QString \&}]{code}{}\end{DoxyParamCaption})}
+
+
+
+Удаляет книгу из модели по коду 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em code} & Уникальный код книги для удаления \\
+\hline
+\end{DoxyParams}
+\Hypertarget{class_book_model_a3f31dc43225c33c6b5e202294e0013f0}\index{BookModel@{BookModel}!rowCount@{rowCount}}
+\index{rowCount@{rowCount}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{rowCount()}{rowCount()}}
+{\footnotesize\ttfamily \label{class_book_model_a3f31dc43225c33c6b5e202294e0013f0} 
+int Book\+Model\+::row\+Count (\begin{DoxyParamCaption}\item[{const QModel\+Index \&}]{parent}{ = {\ttfamily QModelIndex()}}\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [override]}}
+
+
+
+Возвращает количество строк в модели 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em parent} & Родительский индекс (не используется для табличных моделей) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+Количество книг в модели 
+\end{DoxyReturn}
+\Hypertarget{class_book_model_aeffa7435c761c63c77955c488299de3d}\index{BookModel@{BookModel}!SaveToFile@{SaveToFile}}
+\index{SaveToFile@{SaveToFile}!BookModel@{BookModel}}
+\doxysubsubsection{\texorpdfstring{SaveToFile()}{SaveToFile()}}
+{\footnotesize\ttfamily \label{class_book_model_aeffa7435c761c63c77955c488299de3d} 
+bool Book\+Model\+::\+Save\+To\+File (\begin{DoxyParamCaption}\item[{const QString \&}]{file\+Path}{}\end{DoxyParamCaption}) const}
+
+
+
+Сохраняет список книг в файл 
+
+
+\begin{DoxyParams}{Аргументы}
+{\em file\+Path} & Путь к файлу для сохранения \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Возвращает}
+true если сохранение успешно, false в случае ошибки 
+\end{DoxyReturn}
+
+
+Объявления и описания членов классов находятся в файлах\+:\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{_book_model_8h}{Book\+Model.\+h}}\item 
+\mbox{\hyperlink{_book_model_8cpp}{Book\+Model.\+cpp}}\end{DoxyCompactItemize}
