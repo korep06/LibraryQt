@@ -14,6 +14,7 @@
 #include <QTranslator>
 #include <QLabel>
 #include <QMessageBox>
+#include <iostream>
 
 /**
  * @brief Точка входа в приложение библиотеки
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
     // Создание и отображение главного окна приложения
     MainWindow w;
     w.show();
-
+    std::cout << "Hello" << std::endl;
     // Запуск основного цикла обработки событий
     return a.exec();
 }
