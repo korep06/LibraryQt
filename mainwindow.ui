@@ -627,7 +627,8 @@
     <property name="title">
      <string>Статистика</string>
     </property>
-    <addaction name="mb_act_get_info"/>
+    <addaction name="mb_act_PDF"/>
+    <addaction name="mb_act_HTML"/>
    </widget>
    <addaction name="menu_bar_file"/>
    <addaction name="menu_bar_edit"/>
@@ -690,9 +691,9 @@
     <string>Найти читателя</string>
    </property>
   </action>
-  <action name="mb_act_get_info">
+  <action name="mb_act_PDF">
    <property name="text">
-    <string>Вывести статистику</string>
+    <string>Отчет PDF</string>
    </property>
   </action>
   <action name="action">
@@ -703,6 +704,11 @@
   <action name="action_3">
    <property name="text">
     <string>Принять книгу</string>
+   </property>
+  </action>
+  <action name="mb_act_HTML">
+   <property name="text">
+    <string>Отчет HTML</string>
    </property>
   </action>
  </widget>

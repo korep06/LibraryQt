@@ -19,6 +19,13 @@
 #include <QSortFilterProxyModel>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QFileDialog>
+#include <QFile>
+#include <QTextStream>
+#include <QTextDocument>
+#include <QPrinter>
+#include <QDateTime>
+
 
 /**
  * @class MainWindow
@@ -96,6 +103,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->mb_act_delete_reader, &QAction::triggered, this, &MainWindow::act_delete_reader);
     connect(ui->mb_act_search_book, &QAction::triggered, this, &MainWindow::act_search_book);
     connect(ui->mb_act_search_reader, &QAction::triggered, this, &MainWindow::act_search_reader);
+    connect(ui->mb_act_HTML, &QAction::triggered, this , &MainWindow::act_export_books_html);
+    connect(ui->mb_act_PDF, &QAction::triggered, this , &MainWindow::act_export_books_pdf);
 
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::act_UpdateActionStates);
     act_UpdateActionStates(ui->tabWidget->currentIndex());
@@ -173,6 +182,265 @@ void MainWindow::act_close_app()
     act_save_file();
     close();
 }
+
+QString MainWindow::buildFullReportHtml() const
+{
+    const QList<Book>   &books   = bookModel_->GetBooks();
+    const QList<Reader> &readers = readerModel_->GetReaders();
+
+    //  Текущий месяц
+    QDate today      = QDate::currentDate();
+    QDate monthStart = QDate(today.year(), today.month(), 1);
+    QDate monthEnd   = monthStart.addMonths(1).addDays(-1);
+
+    auto isInCurrentMonth = [&](const QDate &d) {
+        return d >= monthStart && d <= monthEnd;
+    };
+
+    //  Карта код книги → сама книга (для быстрых поисков)
+    QHash<QString, const Book*> bookByCode;
+    for (const Book &b : books) {
+        bookByCode.insert(b.code, &b);
+    }
+
+    //  Общая статистика
+    int totalBooks          = books.size();
+    int totalReaders        = readers.size();
+    int totalTakenNow       = 0;   // сколько книг сейчас на руках
+    int booksTakenThisMonth = 0;   // сколько книг выдано в текущем месяце
+
+    for (const Book &b : books) {
+        if (b.is_taken)
+            ++totalTakenNow;
+
+        if (b.date_taken.has_value() && isInCurrentMonth(*b.date_taken))
+            ++booksTakenThisMonth;
+    }
+
+    //  Начинаем HTML
+    QString html;
+    html += "<!DOCTYPE html><html><head><meta charset=\"utf-8\">";
+    html += "<title>Отчёт по библиотеке</title>";
+    html += "<style>"
+            "body{font-family:'DejaVu Sans',sans-serif;font-size:10pt;}"
+            "h1{margin-bottom:4px;}"
+            "h2{margin-top:14px;margin-bottom:4px;font-size:11pt;}"
+            "table{border-collapse:collapse;width:100%;margin-bottom:10px;}"
+            "th,td{border:1px solid #444;padding:4px;}"
+            "th{background:#f0f0f0;text-align:left;}"
+            ".meta{color:#555;font-size:9pt;margin-bottom:8px;}"
+            ".badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:8pt;}"
+            ".badge-ok{background:#d4edda;border:1px solid #c3e6cb;}"
+            ".badge-warn{background:#f8d7da;border:1px solid #f5c6cb;}"
+            "</style>";
+    html += "</head><body>";
+
+    //  Заголовок
+    html += "<h1>Отчёт по библиотеке</h1>";
+    html += "<div class=\"meta\">";
+    html += "Дата формирования: "
+            + QDateTime::currentDateTime().toString("dd.MM.yyyy HH:mm")
+            + "<br/>";
+    html += "Отчётный период: "
+            + monthStart.toString("dd.MM.yyyy")
+            + " – "
+            + monthEnd.toString("dd.MM.yyyy");
+    html += "</div>";
+
+    //  Общая статистика
+    html += "<h2>Общая статистика</h2>";
+    html += "<table>";
+    html += "<tr><th>Показатель</th><th>Значение</th></tr>";
+
+    html += "<tr><td>Всего книг</td><td>"
+            + QString::number(totalBooks) + "</td></tr>";
+    html += "<tr><td>Всего читателей</td><td>"
+            + QString::number(totalReaders) + "</td></tr>";
+    html += "<tr><td>Книг сейчас на руках</td><td>"
+            + QString::number(totalTakenNow) + "</td></tr>";
+    html += "<tr><td>Книг выдано в текущем месяце</td><td>"
+            + QString::number(booksTakenThisMonth) + "</td></tr>";
+
+
+    html += "</table>";
+
+    //  Таблица книг
+    html += "<h2>Список книг</h2>";
+    html += "<table>";
+    html += "<tr>"
+            "<th>Код</th>"
+            "<th>Название</th>"
+            "<th>Автор</th>"
+            "<th>Статус</th>"
+            "<th>Дата выдачи</th>"
+            "</tr>";
+
+    for (const Book &b : books) {
+        html += "<tr>";
+
+        html += "<td>" + b.code.toHtmlEscaped() + "</td>";
+        html += "<td>" + b.name.toHtmlEscaped() + "</td>";
+        html += "<td>" + b.author.toHtmlEscaped() + "</td>";
+
+        QString statusHtml;
+        if (b.is_taken) {
+            statusHtml = "<span class=\"badge badge-warn\">Выдана</span>";
+        } else {
+            statusHtml = "<span class=\"badge badge-ok\">В наличии</span>";
+        }
+        html += "<td>" + statusHtml + "</td>";
+
+        QString dateStr;
+        if (b.date_taken.has_value()) {
+            dateStr = b.date_taken->toString("dd.MM.yyyy");
+        }
+        html += "<td>" + dateStr.toHtmlEscaped() + "</td>";
+
+        html += "</tr>";
+    }
+    html += "</table>";
+
+    //  Таблица читателей
+    html += "<h2>Список читателей</h2>";
+    html += "<table>";
+    html += "<tr>"
+            "<th>ID</th>"
+            "<th>ФИО</th>"
+            "<th>Пол</th>"
+            "<th>Книг на руках</th>"
+            "</tr>";
+
+    for (const Reader &r : readers) {
+        html += "<tr>";
+
+        html += "<td>" + r.ID.toHtmlEscaped() + "</td>";
+
+        QString fio = r.first_name + " " + r.second_name + " " + r.third_name;
+        html += "<td>" + fio.toHtmlEscaped() + "</td>";
+
+        QString genderStr = (r.gender == Sex::Male) ? "Мужской" : "Женский";
+        html += "<td>" + genderStr.toHtmlEscaped() + "</td>";
+
+        html += "<td>" + QString::number(r.taken_books.size()) + "</td>";
+
+        html += "</tr>";
+    }
+    html += "</table>";
+
+    //  Таблица должников
+    html += "<h2>Должники (книги на руках)</h2>";
+
+    bool hasDebtors = false;
+    QString debtorTable;
+    debtorTable += "<table>";
+    debtorTable += "<tr>"
+                   "<th>ID читателя</th>"
+                   "<th>ФИО</th>"
+                   "<th>Код книги</th>"
+                   "<th>Название книги</th>"
+                   "<th>Дата выдачи</th>"
+                   "</tr>";
+
+    for (const Reader &r : readers) {
+        QString fio = r.first_name + " " + r.second_name + " " + r.third_name;
+
+        for (const QString &code : r.taken_books) {
+            const Book *b = bookByCode.value(code, nullptr);
+            if (!b)
+                continue;
+
+            if (!b->is_taken)
+                continue; // по идее не должно быть, но на всякий случай
+
+            hasDebtors = true;
+
+            debtorTable += "<tr>";
+            debtorTable += "<td>" + r.ID.toHtmlEscaped() + "</td>";
+            debtorTable += "<td>" + fio.toHtmlEscaped() + "</td>";
+            debtorTable += "<td>" + b->code.toHtmlEscaped() + "</td>";
+            debtorTable += "<td>" + b->name.toHtmlEscaped() + "</td>";
+
+            QString dateStr;
+            if (b->date_taken.has_value())
+                dateStr = b->date_taken->toString("dd.MM.yyyy");
+
+            debtorTable += "<td>" + dateStr.toHtmlEscaped() + "</td>";
+            debtorTable += "</tr>";
+        }
+    }
+    debtorTable += "</table>";
+
+    if (hasDebtors) {
+        html += debtorTable;
+    } else {
+        html += "<p>На данный момент все книги возвращены. Должников нет </p>";
+    }
+
+    html += "</body></html>";
+    return html;
+}
+
+
+void MainWindow::act_export_books_pdf()
+{
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        "Сохранить отчёт в PDF",
+        "LibraryReport.pdf",
+        "PDF файлы (*.pdf)");
+
+    if (fileName.isEmpty())
+        return;
+
+    const QString html = buildFullReportHtml();
+
+    QTextDocument doc;
+    doc.setHtml(html);
+
+    QPrinter printer(QPrinter::HighResolution);
+    printer.setOutputFormat(QPrinter::PdfFormat);
+    printer.setOutputFileName(fileName);
+
+    doc.print(&printer);
+
+    QMessageBox::information(this, "Отчёт",
+                             "PDF-отчёт успешно сохранён ");
+}
+
+void MainWindow::act_export_books_html()
+{
+    QString fileName = QFileDialog::getSaveFileName(
+        this,
+        "Сохранить отчёт в HTML",
+        "LibraryReport.html",
+        "HTML файлы (*.html)");
+
+    if (fileName.isEmpty())
+        return;
+
+    const QString html = buildFullReportHtml();
+
+    QFile file(fileName);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QMessageBox::warning(this, "Ошибка",
+                             "Не удалось открыть файл для записи");
+        return;
+    }
+
+    QTextStream out(&file);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    out.setEncoding(QStringConverter::Utf8);
+#else
+    out.setCodec("UTF-8");
+#endif
+    out << html;
+    file.close();
+
+    QMessageBox::information(this, "Отчёт",
+                             "HTML-отчёт успешно сохранён ");
+}
+
+
 
 /**
  * @brief Проверка корректности данных при добавлении книги.
@@ -364,8 +632,8 @@ void MainWindow::act_edit_book()
     if (dialog.exec() == QDialog::Accepted) {
         book.name = nameEdit.text().trimmed();
         book.author = authorEdit.text().trimmed();
-        book.is_taken = statusCombo.currentData().toBool();
-        book.date_taken = book.is_taken ? book.date_taken : std::optional<QDate>(std::nullopt);
+        book.is_taken = book.is_taken;
+        book.date_taken = book.date_taken;
         bookModel_->UpdateBookAt(row, book);
 
         QMessageBox::information(this, "Редактирование книги", "Изменения применены");

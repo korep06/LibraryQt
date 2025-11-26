@@ -4,7 +4,11 @@
 #include "BookModel.h"
 #include "ReaderModel.h"
 
+
 #include <QMainWindow>
+#include <QDateTime>
+#include <QString>
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -45,6 +49,12 @@ private slots:
 
     void act_return_book();
 
+    void act_export_books_pdf();
+    void act_export_books_html();
+
+
+
+
     // Кнопки
     void on_pb_addBook_clicked();
     void on_pb_editBook_clicked();
@@ -71,6 +81,8 @@ private:
     void checkBookSearch(const QString &query);
     void checkGiveOutInput(const QString &code, const QString &readerID);
     void checkEditBook(const QString &name, const QString &author);
+
+    QString buildFullReportHtml() const;
 };
 
 #endif // MAINWINDOW_H
