@@ -234,14 +234,10 @@ void MainWindow::act_add_book()
 
     QFormLayout form(&dialog);
     QLineEdit nameEdit, authorEdit;
-    QComboBox availableCombo;
-    availableCombo.addItem("В наличии", false);
-    availableCombo.addItem("Выдана", true);
 
     QPushButton okButton("Добавить"), cancelButton("Отмена");
     form.addRow("Название:", &nameEdit);
     form.addRow("Автор:", &authorEdit);
-    form.addRow("Статус:", &availableCombo);
     form.addRow(&okButton, &cancelButton);
 
     connect(&okButton, &QPushButton::clicked, [&]() {
@@ -262,7 +258,7 @@ void MainWindow::act_add_book()
         book.code = BookModel::GenerateBookCode(bookModel_->GetBooks());
         book.name = nameEdit.text().trimmed();
         book.author = authorEdit.text().trimmed();
-        book.is_taken = availableCombo.currentData().toBool();
+        book.is_taken = false;
         book.date_taken = std::nullopt;
         bookModel_->AddBook(book);
 
@@ -345,15 +341,12 @@ void MainWindow::act_edit_book()
     QFormLayout form(&dialog);
     QLineEdit nameEdit(book.name);
     QLineEdit authorEdit(book.author);
-    QComboBox statusCombo;
-    statusCombo.addItem("В наличии", false);
-    statusCombo.addItem("Выдана", true);
-    statusCombo.setCurrentIndex(book.is_taken ? 1 : 0);
+    QLabel statusLabel(book.is_taken ? "Выдана" : "В наличии");
 
     QPushButton okButton("Сохранить"), cancelButton("Отмена");
     form.addRow("Название:", &nameEdit);
     form.addRow("Автор:", &authorEdit);
-    form.addRow("Статус:", &statusCombo);
+    form.addRow("Статус:", &statusLabel);
     form.addRow(&okButton, &cancelButton);
 
     connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
