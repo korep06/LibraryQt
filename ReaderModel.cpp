@@ -321,35 +321,37 @@ bool ReaderModel::LoadFromXml(const QString& filePath)
 
     while (!xml.atEnd() && !xml.hasError()) {
         auto token = xml.readNext();
+
+        // Ищем <reader>
         if (token == QXmlStreamReader::StartElement && xml.name() == "reader") {
             Reader reader;
 
+            // Разбираем содержимое <reader> ... </reader>
             while (!xml.atEnd()) {
                 xml.readNext();
 
-                if (xml.tokenType() == QXmlStreamReader::EndElement && xml.name() == "reader")
+                // Закрывающий тег </reader> — выходим из внутреннего цикла
+                if (xml.tokenType() == QXmlStreamReader::EndElement
+                    && xml.name() == "reader")
+                {
                     break;
+                }
 
                 if (xml.tokenType() != QXmlStreamReader::StartElement)
                     continue;
 
                 const auto tag = xml.name();
-                const QString text = xml.readElementText();
 
-                if (tag == "ID")             reader.ID = text;
-                else if (tag == "first_name")  reader.first_name = text;
-                else if (tag == "second_name") reader.second_name = text;
-                else if (tag == "third_name")  reader.third_name = text;
-                else if (tag == "gender") {
-                    reader.gender = (text.trimmed() == "1" ? Sex::Male : Sex::Female);
-                } else if (tag == "taken_books") {
-                    // внутри <taken_books> читаем <book>
+                // ОСОБЫЙ СЛУЧАЙ: <taken_books> с вложенными <book>
+                if (tag == "taken_books") {
                     while (!xml.atEnd()) {
                         xml.readNext();
 
                         if (xml.tokenType() == QXmlStreamReader::EndElement
                             && xml.name() == "taken_books")
+                        {
                             break;
+                        }
 
                         if (xml.tokenType() == QXmlStreamReader::StartElement
                             && xml.name() == "book")
@@ -358,6 +360,18 @@ bool ReaderModel::LoadFromXml(const QString& filePath)
                             if (!code.isEmpty())
                                 reader.taken_books.append(code);
                         }
+                    }
+                } else {
+                    // Обычные простые поля: только текст внутри тега
+                    const QString text = xml.readElementText();
+
+                    if (tag == "ID")              reader.ID = text;
+                    else if (tag == "first_name")  reader.first_name = text;
+                    else if (tag == "second_name") reader.second_name = text;
+                    else if (tag == "third_name")  reader.third_name = text;
+                    else if (tag == "gender") {
+                        reader.gender =
+                            (text.trimmed() == "1" ? Sex::Male : Sex::Female);
                     }
                 }
             }
@@ -374,6 +388,7 @@ bool ReaderModel::LoadFromXml(const QString& filePath)
     readers_.swap(tmp);
     return true;
 }
+
 
 
 bool ReaderModel::SaveToXml(const QString& filePath)
