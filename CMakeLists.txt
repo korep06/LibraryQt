@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.16)
 
 project(LibraryQt VERSION 0.1 LANGUAGES CXX)
 
-
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -10,74 +9,101 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets PrintSupport LinguistTools)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets PrintSupport LinguistTools)
+# Только нужные модули: Widgets, PrintSupport, Test, Core
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets PrintSupport Test)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets PrintSupport Test Core)
 
-
-
-set(TS_FILES LibraryQt_ru_RU.ts)
-
+# Основные исходники приложения
 set(PROJECT_SOURCES
-        main.cpp
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
-        startmenu.ui
-        BookModel.h
-        startmenu.h
-        ReaderModel.h
-        BookModel.cpp
-        startmenu.cpp
-        ReaderModel.cpp
-        img-button.qrc
-        ${TS_FILES}
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h
+    mainwindow.ui
+
+    startmenu.cpp
+    startmenu.h
+    startmenu.ui
+
+    BookModel.cpp
+    BookModel.h
+
+    ReaderModel.cpp
+    ReaderModel.h
+
+    Exception.cpp
+    Exception.h
+
+    img-button.qrc
 )
 
+# --- Исполняемый файл приложения ---
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(LibraryQt
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        BookModel.cpp
-        BookModel.h
-        ReaderModel.cpp
-        ReaderModel.h
-        img-button.qrc
-        Exception.h
-        Exception.cpp
     )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET LibraryQt APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
-
-    qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 else()
     if(ANDROID)
         add_library(LibraryQt SHARED
             ${PROJECT_SOURCES}
         )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
     else()
         add_executable(LibraryQt
             ${PROJECT_SOURCES}
         )
     endif()
-
-    qt5_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} ${TS_FILES})
 endif()
 
 target_link_libraries(LibraryQt PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::PrintSupport
+    Qt${QT_VERSION_MAJOR}::Core
 )
 
-# Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
-# If you are developing for iOS or macOS you should consider setting an
-# explicit, fixed bundle identifier manually though.
+# --- Тесты для BookModel ---
+add_executable(BookModelTests
+    tests/test_bookmodel.cpp
+    BookModel.cpp
+    BookModel.h
+    Exception.cpp
+    Exception.h
+)
+
+target_link_libraries(BookModelTests PRIVATE
+    Qt${QT_VERSION_MAJOR}::Test
+    Qt${QT_VERSION_MAJOR}::Core
+)
+
+target_include_directories(BookModelTests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# --- Тесты для ReaderModel ---
+add_executable(ReaderModelTests
+    tests/test_readermodel.cpp
+    ReaderModel.cpp
+    ReaderModel.h
+    Exception.cpp
+    Exception.h
+)
+
+target_link_libraries(ReaderModelTests PRIVATE
+    Qt${QT_VERSION_MAJOR}::Test
+    Qt${QT_VERSION_MAJOR}::Core
+)
+
+target_include_directories(ReaderModelTests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+
+
+
+# --- Свойства приложения (как в шаблоне Qt Creator) ---
 if(${QT_VERSION} VERSION_LESS 6.1.0)
   set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.LibraryQt)
 endif()
+
 set_target_properties(LibraryQt PROPERTIES
     ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
