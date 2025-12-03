@@ -8,6 +8,7 @@
 
 #include "mainwindow.h"
 #include "startmenu.h"
+#include "Logger.h"
 
 #include <QApplication>
 #include <QLocale>
@@ -31,6 +32,14 @@ int main(int argc, char *argv[])
     // Инициализация Qt приложения
     QApplication a(argc, argv);
 
+    // Инициализация логгера
+    if (!Logger::instance().init("logging.ini")) {
+        QMessageBox::warning(nullptr, "Логирование",
+                             "Не удалось инициализировать логирование");
+    } else {
+        LOG_INFO("main", "Приложение запущено");
+    }
+
     // Настройка системы переводов
     QTranslator translator;
     const QStringList uiLanguages = QLocale::system().uiLanguages();
@@ -45,6 +54,7 @@ int main(int argc, char *argv[])
     // Отображение стартового меню для аутентификации
     StartMenu login;
     if (login.exec() != QDialog::Accepted) {
+        LOG_INFO("main", "Пользователь отменил авторизацию, выходим");
         // Если пользователь не прошел аутентификацию, завершаем приложение
         return 0;
     }
@@ -52,7 +62,8 @@ int main(int argc, char *argv[])
     // Создание и отображение главного окна приложения
     MainWindow w;
     w.show();
-    std::cout << "Hello" << std::endl;
-    // Запуск основного цикла обработки событий
-    return a.exec();
+    LOG_INFO("main", "Главное окно показано");
+    int rc = a.exec();
+    LOG_INFO("main", QString("Цикл событий завершён, код=%1").arg(rc));
+    return rc;
 }

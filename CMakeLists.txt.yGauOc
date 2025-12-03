@@ -15,9 +15,6 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets PrintSupport Test
 
 # Основные исходники приложения
 set(PROJECT_SOURCES
-    Logger.h
-    Logger.cpp
-
     main.cpp
     mainwindow.cpp
     mainwindow.h
@@ -35,6 +32,9 @@ set(PROJECT_SOURCES
 
     Exception.cpp
     Exception.h
+
+    Logger.h
+    Logger.cpp
 
     img-button.qrc
 )
