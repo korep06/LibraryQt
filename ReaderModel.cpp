@@ -30,9 +30,9 @@ ReaderModel::ReaderModel( QObject *parent)
 }
 
 void ReaderModel::ReaderModel::UpdateReaderAt(int index, const Reader &reader) {
-    if (index < 0 || index >= readers_.size())
+    if (index < 0 || index >= readers_.size()) {
         return;
-
+    }
     readers_[index] = reader;
     emit dataChanged(this->index(index, 0), this->index(index, columnCount() - 1));
 }
