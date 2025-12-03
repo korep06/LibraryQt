@@ -32,6 +32,7 @@
 namespace {
 QString buildReportHtmlFromData(const QList<Book> &books,
                                 const QList<Reader> &readers)
+
 {
 
     QDate today      = QDate::currentDate();
@@ -406,10 +407,15 @@ void MainWindow::act_export_books_html()
     if (fileName.isEmpty())
         return;
 
+    const QList<Book>   booksSnapshot   = bookModel_->GetBooks();
+    const QList<Reader> readersSnapshot = readerModel_->GetReaders();
 
     struct SharedData {
         QList<Book>   books;
         QList<Reader> readers;
+
+        QList<Book>   sortedBooks;
+        QList<Reader> sortedReaders;
 
         bool loaded = false;
         bool edited = false;
@@ -423,21 +429,13 @@ void MainWindow::act_export_books_html()
     SharedData shared;
 
 
-    std::thread t1([&shared]() {
-        BookModel   booksModel;
-        ReaderModel readersModel;
-
-        bool ok1 = booksModel.LoadFromXml("books.xml");
-        bool ok2 = readersModel.LoadFromXml("readers.xml");
-
+    std::thread t1([&shared, booksSnapshot, readersSnapshot]() {
         QMutexLocker lock(&shared.mutex);
-        if (!ok1 || !ok2) {
-            shared.error = "Не удалось загрузить данные из XML (books.xml/readers.xml)";
-        } else {
-            shared.books   = booksModel.GetBooks();
-            shared.readers = readersModel.GetReaders();
-            shared.loaded  = true;
-        }
+
+        shared.books   = booksSnapshot;
+        shared.readers = readersSnapshot;
+        shared.loaded  = true;
+
         shared.cond.wakeAll();
     });
 
@@ -465,30 +463,26 @@ void MainWindow::act_export_books_html()
                       return a.name < b.name;
                   });
 
-
-        BookModel   reportBooksModel;
-        ReaderModel reportReadersModel;
-
-        for (const Book &b : books)
-            reportBooksModel.AddBook(b);
-        for (const Reader &r : readers)
-            reportReadersModel.AddReader(r);
-
-        bool ok1 = reportBooksModel.SaveToXml("report_books.xml");
-        bool ok2 = reportReadersModel.SaveToXml("report_readers.xml");
+        std::sort(readers.begin(), readers.end(),
+                  [](const Reader &a, const Reader &b) {
+                      // пример: по фамилии, потом по имени
+                      if (a.second_name != b.second_name)
+                          return a.second_name < b.second_name;
+                      return a.first_name < b.first_name;
+                  });
 
         shared.mutex.lock();
-        if (!ok1 || !ok2) {
-            shared.error = "Не удалось сохранить XML-файлы отчёта (report_books.xml/report_readers.xml)";
-        } else {
-            shared.edited = true;
-        }
+        shared.sortedBooks   = books;
+        shared.sortedReaders = readers;
+        shared.edited = true;
         shared.cond.wakeAll();
         shared.mutex.unlock();
     });
 
 
     std::thread t3([&shared, fileName]() {
+        QList<Book>   books;
+        QList<Reader> readers;
 
         shared.mutex.lock();
         while (!shared.edited && shared.error.isEmpty()) {
@@ -499,24 +493,14 @@ void MainWindow::act_export_books_html()
             shared.mutex.unlock();
             return;
         }
+
+        books   = shared.sortedBooks;
+        readers = shared.sortedReaders;
         shared.mutex.unlock();
 
 
         BookModel   reportBooksModel;
         ReaderModel reportReadersModel;
-
-        bool ok1 = reportBooksModel.LoadFromXml("report_books.xml");
-        bool ok2 = reportReadersModel.LoadFromXml("report_readers.xml");
-
-        if (!ok1 || !ok2) {
-            shared.mutex.lock();
-            shared.error = "Не удалось перечитать XML-файлы отчёта";
-            shared.mutex.unlock();
-            return;
-        }
-
-        const QList<Book>   &books   = reportBooksModel.GetBooks();
-        const QList<Reader> &readers = reportReadersModel.GetReaders();
 
         QString html = buildReportHtmlFromData(books, readers);
 
