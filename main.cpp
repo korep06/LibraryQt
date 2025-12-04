@@ -43,6 +43,12 @@ int main(int argc, char *argv[])
     // формат вида: [2025-12-04 22:10:01] [info] [main] сообщение
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%n] %v");
 
+    // Сбрасываем лог при любом info и выше
+    logger->flush_on(spdlog::level::info);
+
+    // Плюс периодический flush на всякий
+    spdlog::flush_every(std::chrono::seconds(2));
+
     spdlog::set_level(spdlog::level::debug); // глобальный уровень
 
     spdlog::info("Приложение запущено");

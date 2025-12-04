@@ -6,6 +6,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include "Exception.h"
+#include "spdlog/spdlog.h"
 
 #include <QMessageBox>
 #include <QDialog>
@@ -28,6 +29,9 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <thread>
+
+static auto logMainWindow = spdlog::get("main");
+
 
 namespace {
 QString buildReportHtmlFromData(const QList<Book> &books,
@@ -397,7 +401,7 @@ void MainWindow::act_export_books_pdf()
 
 void MainWindow::act_export_books_html()
 {
-
+    spdlog::info("Старт многопоточного экспорта HTML-отчёта");
     QString fileName = QFileDialog::getSaveFileName(
         this,
         "Сохранить отчёт в HTML",
@@ -430,6 +434,7 @@ void MainWindow::act_export_books_html()
 
 
     std::thread t1([&shared, booksSnapshot, readersSnapshot]() {
+        spdlog::debug("t1: начало копирования данных");
         QMutexLocker lock(&shared.mutex);
 
         shared.books   = booksSnapshot;
@@ -437,11 +442,13 @@ void MainWindow::act_export_books_html()
         shared.loaded  = true;
 
         shared.cond.wakeAll();
+        spdlog::debug("t1: копирование завершено, книг={}, читателей={}",
+                      booksSnapshot.size(), readersSnapshot.size());
     });
 
 
     std::thread t2([&shared]() {
-
+        spdlog::debug("t2: ожидание данных для сортировки");
         shared.mutex.lock();
         while (!shared.loaded && shared.error.isEmpty()) {
             shared.cond.wait(&shared.mutex);
@@ -477,10 +484,12 @@ void MainWindow::act_export_books_html()
         shared.edited = true;
         shared.cond.wakeAll();
         shared.mutex.unlock();
+        spdlog::debug("t2: сортировка завершена");
     });
 
 
     std::thread t3([&shared, fileName]() {
+        spdlog::debug("t3: ожидание отсортированных данных");
         QList<Book>   books;
         QList<Reader> readers;
 
@@ -520,6 +529,7 @@ void MainWindow::act_export_books_html()
         out.setCodec("UTF-8");
 #endif
         out << html;
+        spdlog::info("t3: отчёт записан в файл {}", fileName.toStdString());
         file.close();
     });
 
@@ -531,9 +541,12 @@ void MainWindow::act_export_books_html()
 
     if (!shared.error.isEmpty()) {
         QMessageBox::warning(this, "Ошибка", shared.error);
+        spdlog::warn("Экспорт завершился с ошибкой: {}",
+                     shared.error.toStdString());
     } else {
+        spdlog::info("Экспорт HTML-отчёта успешно завершён");
         QMessageBox::information(this, "Отчёт",
-                                 "HTML-отчёт (многопоточный) успешно сохранён 🎉");
+                                 "HTML-отчёт (многопоточный) успешно сохранён");
     }
 }
 
@@ -595,6 +608,7 @@ void MainWindow::checkAddReader(const QString &surname, const QString &name)
  */
 void MainWindow::act_add_book()
 {
+    spdlog::debug("Открыт диалог добавления книги");
     QDialog dialog(this);
     dialog.setWindowTitle("Добавить книгу");
 
@@ -610,10 +624,13 @@ void MainWindow::act_add_book()
         try {
             checkAddBook(nameEdit.text(), authorEdit.text());
             dialog.accept();
+
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
+            spdlog::warn("Ошибка при добавлении книги: {}", ex.what());
         } catch (const std::exception &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
+            spdlog::warn("Ошибка при добавлении книги: {}", ex.what());
         }
     });
 
@@ -627,6 +644,11 @@ void MainWindow::act_add_book()
         book.is_taken = false;
         book.date_taken = std::nullopt;
         bookModel_->AddBook(book);
+
+        spdlog::info("Добавлена книга: код={}, имя={}, автор={}",
+                     book.code.toStdString(),
+                     book.name.toStdString(),
+                     book.author.toStdString());
 
         QMessageBox::information(this, "Добавление книги", "Книга успешно создана");
     }

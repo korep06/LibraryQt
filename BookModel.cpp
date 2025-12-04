@@ -8,6 +8,7 @@
 
 #include "BookModel.h"
 #include "Exception.h"
+#include "spdlog/spdlog.h"
 
 #include <QFile>
 #include <QJsonDocument>
@@ -193,9 +194,12 @@ const QList<Book>& BookModel::GetBooks() const {
  * @return true если загрузка успешна, false в случае ошибки
  */
 bool BookModel::LoadFromFile(const QString& filePath) {
+    spdlog::info("Загрузка книг из файла {}", filePath.toStdString());
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly)) {
         qDebug() << "Failed to open file for reading:" << filePath;
+        spdlog::warn("Не удалось открыть файл для чтения: {}",
+                     filePath.toStdString());
         return false;
     }
 
@@ -219,6 +223,7 @@ bool BookModel::LoadFromFile(const QString& filePath) {
         book.date_taken = dateStr.isEmpty() ? std::nullopt : std::optional<QDate>(QDate::fromString(dateStr , "dd/MM/yyyy"));
         books_.append(book);
     }
+    spdlog::info("Успешная загрузка книг, всего: {}", books_.size());
     return true;
 }
 
