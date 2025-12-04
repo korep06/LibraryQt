@@ -8,7 +8,11 @@
 
 #include "mainwindow.h"
 #include "startmenu.h"
-#include "Logger.h"
+
+#include "spdlog/details/null_mutex.h"
+#include "spdlog/common.h"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/basic_file_sink.h"   // простой файловый sink
 
 #include <QApplication>
 #include <QLocale>
@@ -32,13 +36,16 @@ int main(int argc, char *argv[])
     // Инициализация Qt приложения
     QApplication a(argc, argv);
 
-    // Инициализация логгера
-    if (!Logger::instance().init("logging.ini")) {
-        QMessageBox::warning(nullptr, "Логирование",
-                             "Не удалось инициализировать логирование");
-    } else {
-        LOG_INFO("main", "Приложение запущено");
-    }
+    // создаём файловый логгер, который пишет в library.log
+    auto logger = spdlog::basic_logger_mt("main", "library.log");
+    spdlog::set_default_logger(logger);
+
+    // формат вида: [2025-12-04 22:10:01] [info] [main] сообщение
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%n] %v");
+
+    spdlog::set_level(spdlog::level::debug); // глобальный уровень
+
+    spdlog::info("Приложение запущено");
 
     // Настройка системы переводов
     QTranslator translator;
@@ -54,7 +61,7 @@ int main(int argc, char *argv[])
     // Отображение стартового меню для аутентификации
     StartMenu login;
     if (login.exec() != QDialog::Accepted) {
-        LOG_INFO("main", "Пользователь отменил авторизацию, выходим");
+         spdlog::info("Пользователь закрыл окно логина");
         // Если пользователь не прошел аутентификацию, завершаем приложение
         return 0;
     }
@@ -62,8 +69,9 @@ int main(int argc, char *argv[])
     // Создание и отображение главного окна приложения
     MainWindow w;
     w.show();
-    LOG_INFO("main", "Главное окно показано");
+    spdlog::info("Главное окно показано");
+
     int rc = a.exec();
-    LOG_INFO("main", QString("Цикл событий завершён, код=%1").arg(rc));
+    spdlog::info("Цикл событий завершён, код = {}", rc);
     return rc;
 }

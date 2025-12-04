@@ -13,6 +13,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets PrintSupport Test)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets PrintSupport Test Core)
 
+
+
+
 # Основные исходники приложения
 set(PROJECT_SOURCES
     Logger.h
@@ -38,6 +41,9 @@ set(PROJECT_SOURCES
 
     img-button.qrc
 )
+
+#Для логгирования
+include_directories(${CMAKE_SOURCE_DIR})
 
 # --- Исполняемый файл приложения ---
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
