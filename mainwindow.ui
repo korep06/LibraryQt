@@ -39,7 +39,7 @@
      <enum>QTabWidget::TabPosition::West</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="tab">
      <attribute name="title">
@@ -529,6 +529,37 @@
           <widget class="QLabel" name="label_11">
            <property name="text">
             <string>Поиск</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_13">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="pb_get_info_reader">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="img-button.qrc">
+             <normaloff>:/icons/button/img/reader_inf.png</normaloff>:/icons/button/img/reader_inf.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>40</width>
+             <height>40</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_13">
+           <property name="text">
+            <string>информация</string>
            </property>
           </widget>
          </item>
