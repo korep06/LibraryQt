@@ -30,6 +30,22 @@ struct Book {
     QString author;              ///< Автор книги
     bool is_taken;               ///< Флаг взятия книги (true если книга взята)
     std::optional<QDate> date_taken; ///< Дата взятия книги (если книга взята)
+
+    Book() : is_taken(false) {}
+
+    Book(const QString& c,
+         const QString& n,
+         const QString& a,
+         bool taken = false,
+         std::optional<QDate> dt = std::nullopt)
+        : code(c)
+        , name(n)
+        , author(a)
+        , is_taken(taken)
+        , date_taken(dt)
+    {}
+
+     Book(const Book& other) = default; // копирующий конструктор
 };
 
 /**
@@ -136,6 +152,12 @@ public:
     bool LoadFromXml(const QString& filePath);
 
     static QString GenerateBookCode(const QList<Book>& existingBooks);
+
+    // --- Работа с базой данных ---
+    bool LoadFromDatabase();
+    bool InsertOrUpdateInDatabase(const Book& book);
+    bool DeleteFromDatabase(const QString& code);
+    bool UpdateBookCodeInDatabase(const QString& oldCode, const Book& book);
 
 private:
 

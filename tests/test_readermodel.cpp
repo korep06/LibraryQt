@@ -20,7 +20,7 @@ private slots:
     // 2) Удаление читателя без книг
     void testRemoveReaderWithoutBooks() {
         ReaderModel model;
-        model.AddReader({"R001", "Иванов", "Иван", "Иванович", Sex::Male, {}});
+        model.AddReader({"R001", "Иванов", "Иван", "Иванович", Sex::Male, QDate::currentDate(),  {}});
         QVERIFY(model.RemoveReader("R001"));
         QCOMPARE(model.rowCount(), 0);
     }

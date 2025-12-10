@@ -8,6 +8,8 @@
 
 #include "ReaderModel.h"
 #include "Exception.h"
+#include "DatabaseManager.h"
+
 
 #include <QFile>
 #include <QJsonDocument>
@@ -18,6 +20,8 @@
 #include <QRandomGenerator>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QSqlQuery>
+#include <QSqlError>
 
 
 /**
@@ -35,6 +39,8 @@ void ReaderModel::ReaderModel::UpdateReaderAt(int index, const Reader &reader) {
     }
     readers_[index] = reader;
     emit dataChanged(this->index(index, 0), this->index(index, columnCount() - 1));
+
+    InsertOrUpdateInDatabase(reader);
 }
 
 /**
@@ -110,6 +116,8 @@ void ReaderModel::AddReader(const Reader &reader)
     beginInsertRows(QModelIndex(), readers_.size(), readers_.size());
     readers_.append(reader);
     endInsertRows();
+
+    InsertOrUpdateInDatabase(reader);
 }
 
 /**
@@ -128,6 +136,8 @@ bool ReaderModel::RemoveReader(const QString &id)
             beginRemoveRows(QModelIndex(), i, i);
             readers_.removeAt(i);
             endRemoveRows();
+
+            DeleteFromDatabase(id);
             return true;
         }
     }
@@ -151,6 +161,8 @@ bool ReaderModel::AddLinkBook(const QString &readerID, const QString &bookCode)
     QModelIndex topLeft = index(idx, 0);
     QModelIndex bottomRight = index(idx, columnCount() - 1);
     emit dataChanged(topLeft, bottomRight);
+
+    InsertOrUpdateInDatabase(readers_[idx]);
     return true;
 }
 
@@ -175,6 +187,7 @@ bool ReaderModel::RemoveLinkBook(const QString &readerID, const QString &bookCod
     QModelIndex bottomRight = index(idx, columnCount() - 1);
     emit dataChanged(topLeft, bottomRight);
 
+    InsertOrUpdateInDatabase(readers_[idx]);
     return true;
 }
 
@@ -468,8 +481,110 @@ bool ReaderModel::UpdateBookCodeForAllReaders(const QString &oldCode,
             QModelIndex topLeft = index(i, 0);
             QModelIndex bottomRight = index(i, columnCount() - 1);
             emit dataChanged(topLeft, bottomRight);
+
+            InsertOrUpdateInDatabase(readers_[i]);
         }
     }
 
     return changedAny;
+}
+
+bool ReaderModel::LoadFromDatabase()
+{
+    QSqlDatabase db = DatabaseManager::instance().database();
+    if (!db.isOpen())
+        return false;
+
+    QSqlQuery q(db);
+    if (!q.exec("SELECT id, first_name, second_name, third_name, "
+                "gender, reg_date, taken_books FROM readers")) {
+        qDebug() << "LoadFromDatabase readers error:" << q.lastError().text();
+        return false;
+    }
+
+    beginResetModel();
+    readers_.clear();
+
+    while (q.next()) {
+        Reader r;
+        r.ID          = q.value(0).toString();
+        r.first_name  = q.value(1).toString();
+        r.second_name = q.value(2).toString();
+        r.third_name  = q.value(3).toString();
+        r.gender      = (q.value(4).toInt() == 1 ? Sex::Male : Sex::Female);
+
+        const QString regStr = q.value(5).toString();
+        if (!regStr.isEmpty())
+            r.reg_date = QDate::fromString(regStr, "dd/MM/yyyy");
+        else
+            r.reg_date = QDate();
+
+        const QString takenStr = q.value(6).toString();
+        r.taken_books.clear();
+        for (const QString& part : takenStr.split(",", Qt::SkipEmptyParts)) {
+            r.taken_books.append(part.trimmed());
+        }
+
+        readers_.append(r);
+    }
+
+    endResetModel();
+    return true;
+}
+
+bool ReaderModel::InsertOrUpdateInDatabase(const Reader& reader)
+{
+    QSqlDatabase db = DatabaseManager::instance().database();
+    if (!db.isOpen())
+        return false;
+
+    const QString taken = reader.taken_books.join(",");
+
+    QSqlQuery q(db);
+    q.prepare(
+        "INSERT INTO readers(id, first_name, second_name, third_name, "
+        " gender, reg_date, taken_books) "
+        "VALUES (:id, :first, :second, :third, :gender, :reg, :books) "
+        "ON CONFLICT(id) DO UPDATE SET "
+        " first_name  = excluded.first_name,"
+        " second_name = excluded.second_name,"
+        " third_name  = excluded.third_name,"
+        " gender      = excluded.gender,"
+        " reg_date    = excluded.reg_date,"
+        " taken_books = excluded.taken_books"
+        );
+
+    q.bindValue(":id", reader.ID);
+    q.bindValue(":first", reader.first_name);
+    q.bindValue(":second", reader.second_name);
+    q.bindValue(":third", reader.third_name);
+    q.bindValue(":gender", reader.gender == Sex::Male ? 1 : 0);
+    q.bindValue(":reg",
+                reader.reg_date.isValid()
+                    ? reader.reg_date.toString("dd/MM/yyyy")
+                    : QString());
+    q.bindValue(":books", taken);
+
+    if (!q.exec()) {
+        qDebug() << "InsertOrUpdateInDatabase reader error:" << q.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+bool ReaderModel::DeleteFromDatabase(const QString& id)
+{
+    QSqlDatabase db = DatabaseManager::instance().database();
+    if (!db.isOpen())
+        return false;
+
+    QSqlQuery q(db);
+    q.prepare("DELETE FROM readers WHERE id = :id");
+    q.bindValue(":id", id);
+
+    if (!q.exec()) {
+        qDebug() << "DeleteFromDatabase reader error:" << q.lastError().text();
+        return false;
+    }
+    return true;
 }

@@ -17,6 +17,13 @@
 #include <QAbstractTableModel>
 #include <QDate>
 
+
+class PersonBase {
+public:
+    virtual ~PersonBase() = default;
+    virtual QString fullName() const = 0;
+};
+
 /**
  * @enum Sex
  * @brief Перечисление для обозначения пола читателя
@@ -30,7 +37,7 @@ enum Sex {
  * @struct Reader
  * @brief Структура для хранения информации о читателе
  */
-struct Reader {
+struct Reader : public PersonBase {
     QString ID;              ///< Уникальный идентификатор читателя
     QString first_name;      ///< Имя читателя
     QString second_name;     ///< Фамилия читателя
@@ -38,6 +45,30 @@ struct Reader {
     Sex gender;              ///< Пол читателя
     QDate reg_date;
     QList<QString> taken_books; ///< Список кодов взятых книг
+
+    Reader() = default;
+
+    Reader(const QString& id,
+           const QString& first,
+           const QString& second,
+           const QString& third,
+           Sex g,
+           const QDate& reg,
+           const QList<QString>& books)
+        : ID(id)
+        , first_name(first)
+        , second_name(second)
+        , third_name(third)
+        , gender(g)
+        , reg_date(reg)
+        , taken_books(books)
+    {}
+
+    Reader(const Reader& other) = default; // копирующий конструктор
+
+    QString fullName() const override {
+        return first_name + " " + second_name + " " + third_name;
+    }
 };
 
 /**
@@ -151,6 +182,10 @@ public:
 
     bool UpdateBookCodeForAllReaders(const QString &oldCode,
                                      const QString &newCode);
+
+    bool LoadFromDatabase();
+    bool InsertOrUpdateInDatabase(const Reader& reader);
+    bool DeleteFromDatabase(const QString& id);
 
 
 private:

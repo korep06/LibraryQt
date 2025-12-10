@@ -7,6 +7,7 @@
 #include "./ui_mainwindow.h"
 #include "Exception.h"
 #include "spdlog/spdlog.h"
+#include "DatabaseManager.h"
 
 #include <QMessageBox>
 #include <QDialog>
@@ -233,10 +234,20 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    if (!DatabaseManager::instance().open("library.db")) {
+        QMessageBox::warning(this, "База данных",
+                             "Не удалось открыть файл базы данных. "
+                             "Данные будут храниться только в JSON/XML.");
+    }
+
     // Инициализация моделей
     bookModel_ = new BookModel(this);
     readerModel_ = new ReaderModel(this);
 
+    bool booksLoadedDb   = bookModel_->LoadFromDatabase();
+    bool readersLoadedDb = readerModel_->LoadFromDatabase();
+
+    /*
     // --- КНИГИ: сначала JSON, потом XML, потом тестовые данные ---
     bool booksLoadedJson = bookModel_->LoadFromFile("books.json");
     if (!booksLoadedJson || bookModel_->GetBooks().isEmpty()) {
@@ -248,7 +259,7 @@ MainWindow::MainWindow(QWidget *parent)
     if (!readersLoadedJson || readerModel_->GetReaders().isEmpty()) {
         bool readersLoadedXml = readerModel_->LoadFromXml("readers.xml");
     }
-
+    */
 
     // Установка моделей в таблицы
     ui->tbl_view_book->setModel(bookModel_);
@@ -1156,7 +1167,7 @@ void MainWindow::act_search_reader() {
             auto readerOpt = readerModel_->FindReader(query);
             if (!readerOpt) {
                 for (const auto& r : readerModel_->GetReaders()) {
-                    QString fullName = r.first_name + " " + r.second_name + " " + r.third_name;
+                    QString fullName = r.fullName();
                     if (fullName.contains(query, Qt::CaseInsensitive) || r.ID.compare(query, Qt::CaseInsensitive) == 0) {
                         readerOpt = r;
                         break;
@@ -1202,7 +1213,7 @@ void MainWindow::act_get_info() {
 
     const Reader &r = readers[row];
 
-    QString fio = r.first_name + " " + r.second_name + " " + r.third_name;
+    QString fio = r.fullName();
     QString genderStr = (r.gender == Sex::Male) ? "Мужской" : "Женский";
 
     QString msg;

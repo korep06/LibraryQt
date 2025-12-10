@@ -78,6 +78,8 @@ add_executable(BookModelTests
     BookModel.h
     Exception.cpp
     Exception.h
+    DataBaseManager.cpp
+    DataBaseManager.h
 )
 
 target_link_libraries(BookModelTests PRIVATE
@@ -97,6 +99,8 @@ add_executable(ReaderModelTests
     ReaderModel.h
     Exception.cpp
     Exception.h
+    DataBaseManager.cpp
+    DataBaseManager.h
 )
 
 target_link_libraries(ReaderModelTests PRIVATE

@@ -9,6 +9,8 @@
 #include "BookModel.h"
 #include "Exception.h"
 #include "spdlog/spdlog.h"
+#include "DatabaseManager.h"
+
 
 #include <QFile>
 #include <QJsonDocument>
@@ -18,6 +20,8 @@
 #include <QRandomGenerator>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
+#include <QSqlQuery>
+#include <QSqlError>
 
 
 //BookModel::BookModel() {}
@@ -35,10 +39,17 @@ void BookModel::UpdateBookAt(int index, const Book &book)
     if (index < 0 || index >= books_.size())
         return;
 
+    const QString oldCode = books_[index].code;
     books_[index] = book;
-
     // Уведомляем представление, что изменились данные в строке index
     emit dataChanged(this->index(index, 0), this->index(index, columnCount() - 1));
+
+    if (oldCode == book.code) {
+        InsertOrUpdateInDatabase(book);
+    } else {
+        // Изменился первичный ключ — обновляем строку по старому коду
+        UpdateBookCodeInDatabase(oldCode, book);
+    }
 }
 
 /**
@@ -114,9 +125,12 @@ QVariant BookModel::headerData(int section, Qt::Orientation orientation, int rol
  * @param book Книга для добавления
  */
 void BookModel::AddBook(const Book& book) {
+
     beginInsertRows(QModelIndex(), books_.size(), books_.size());
     books_.append(book);
     endInsertRows();
+
+    InsertOrUpdateInDatabase(book);
 }
 
 /**
@@ -134,6 +148,8 @@ bool BookModel::RemoveBook(const QString& code) {
             beginRemoveRows(QModelIndex(), i, i);
             books_.removeAt(i);
             endRemoveRows();
+
+            DeleteFromDatabase(code);
             return true;
         }
     }
@@ -177,6 +193,8 @@ bool BookModel::SetBookTaken(const QString &code, bool isTaken, std::optional<QD
     QModelIndex topLeft = index(idx, 0);
     QModelIndex bottomRight = index(idx, columnCount() - 1);
     emit dataChanged(topLeft, bottomRight);
+
+    InsertOrUpdateInDatabase(books_[idx]);
     return true;
 }
 
@@ -357,5 +375,124 @@ bool BookModel::SaveToXml(const QString& filePath) const
     xml.writeEndElement(); // books
     xml.writeEndDocument();
     return !xml.hasError();
+}
+
+
+bool BookModel::LoadFromDatabase()
+{
+    QSqlDatabase db = DatabaseManager::instance().database();
+    if (!db.isOpen())
+        return false;
+
+    QSqlQuery q(db);
+    if (!q.exec("SELECT code, name, author, is_taken, date_taken FROM books")) {
+        qDebug() << "LoadFromDatabase books error:" << q.lastError().text();
+        return false;
+    }
+
+    beginResetModel();
+    books_.clear();
+
+    while (q.next()) {
+        const QString code = q.value(0).toString();
+        const QString name = q.value(1).toString();
+        const QString auth = q.value(2).toString();
+        const bool taken   = q.value(3).toBool();
+        const QString dateStr = q.value(4).toString();
+
+        std::optional<QDate> dt;
+        if (!dateStr.isEmpty())
+            dt = QDate::fromString(dateStr, "dd/MM/yyyy");
+
+        books_.append(Book(code, name, auth, taken, dt));
+    }
+
+    endResetModel();
+    return true;
+}
+
+bool BookModel::InsertOrUpdateInDatabase(const Book& book)
+{
+    QSqlDatabase db = DatabaseManager::instance().database();
+    if (!db.isOpen())
+        return false;
+
+    QSqlQuery q(db);
+    q.prepare(
+        "INSERT INTO books(code, name, author, is_taken, date_taken) "
+        "VALUES (:code, :name, :author, :taken, :date) "
+        "ON CONFLICT(code) DO UPDATE SET "
+        " name       = excluded.name,"
+        " author     = excluded.author,"
+        " is_taken   = excluded.is_taken,"
+        " date_taken = excluded.date_taken"
+        );
+
+    q.bindValue(":code", book.code);
+    q.bindValue(":name", book.name);
+    q.bindValue(":author", book.author);
+    q.bindValue(":taken", book.is_taken ? 1 : 0);
+    q.bindValue(":date",
+                book.date_taken
+                    ? book.date_taken->toString("dd/MM/yyyy")
+                    : QString());
+
+    if (!q.exec()) {
+        qDebug() << "InsertOrUpdateInDatabase book error:" << q.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+
+bool BookModel::DeleteFromDatabase(const QString& code)
+{
+    QSqlDatabase db = DatabaseManager::instance().database();
+    if (!db.isOpen())
+        return false;
+
+    QSqlQuery q(db);
+    q.prepare("DELETE FROM books WHERE code = :code");
+    q.bindValue(":code", code);
+
+    if (!q.exec()) {
+        qDebug() << "DeleteFromDatabase book error:" << q.lastError().text();
+        return false;
+    }
+    return true;
+}
+
+bool BookModel::UpdateBookCodeInDatabase(const QString &oldCode, const Book &book)
+{
+    QSqlDatabase db = DatabaseManager::instance().database();
+    if (!db.isOpen())
+        return false;
+
+    QSqlQuery q(db);
+    q.prepare(
+        "UPDATE books SET "
+        " code = :newCode,"
+        " name = :name,"
+        " author = :author,"
+        " is_taken = :taken,"
+        " date_taken = :date "
+        "WHERE code = :oldCode"
+        );
+
+    q.bindValue(":newCode", book.code);
+    q.bindValue(":name", book.name);
+    q.bindValue(":author", book.author);
+    q.bindValue(":taken", book.is_taken ? 1 : 0);
+    q.bindValue(":date",
+                book.date_taken
+                    ? book.date_taken->toString("dd/MM/yyyy")
+                    : QString());
+    q.bindValue(":oldCode", oldCode);
+
+    if (!q.exec()) {
+        qDebug() << "UpdateBookCodeInDatabase error:" << q.lastError().text();
+        return false;
+    }
+    return true;
 }
 
