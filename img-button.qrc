@@ -10,5 +10,6 @@
         <file>img/getbook.png</file>
         <file>img/getbook1.png</file>
         <file>img/givebook.png</file>
+        <file>img/reader_inf.png</file>
     </qresource>
 </RCC>
