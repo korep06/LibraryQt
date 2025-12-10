@@ -904,12 +904,19 @@ void MainWindow::act_edit_reader()
  * @throws InvalidInputException если поля пустые или слишком короткие
  */
 void MainWindow::checkGiveOutInput(const QString &code, const QString &readerID) {
-    if (code.trimmed().isEmpty() || readerID.trimmed().isEmpty())
+    QString c = code.trimmed();
+    QString r = readerID.trimmed();
+
+    if (c.isEmpty() || r.isEmpty())
         throw InvalidInputException("Введите код книги и ID читателя!");
-    if (code.trimmed().length() < 2)
-        throw InvalidInputException("Неверный код книги!");
-    if (readerID.trimmed().length() < 2)
-        throw InvalidInputException("Неверный ID читателя!");
+
+    QRegularExpression codeRe("^B[0-9]{3,5}$");
+    if (!codeRe.match(c).hasMatch())
+        throw InvalidInputException("Неверный формат кода книги (ожидается BXXX)");
+
+    QRegularExpression idRe("^R[0-9]{4}$");
+    if (!idRe.match(r).hasMatch())
+        throw InvalidInputException("Неверный формат ID читателя (ожидается RXXXX)");
 }
 
 /**
@@ -996,7 +1003,10 @@ void MainWindow::act_delete_book() {
         if (!ok) {
             QMessageBox::warning(this, "Ошибка", "Не удалось удалить книгу (возможно, книга не найдена или привязана к читателю)");
         }
-        QMessageBox::information(this, "Удаление книги", "Книга успешно удалена");
+        else {
+            QMessageBox::information(this, "Удаление книги", "Книга успешно удалена");
+        }
+
     } catch (const AppException &ex) {
         QMessageBox::warning(this, "Ошибка", ex.what());
     } catch (const std::exception &ex) {
@@ -1031,7 +1041,10 @@ void MainWindow::act_delete_reader() {
         if (!ok) {
             QMessageBox::warning(this, "Ошибка", "Не удалось удалить читателя (возможно, читатель не найден или есть выданные книги)");
         }
-        QMessageBox::information(this, "Удаление читателя", "Читатель успешно удален");
+        else {
+           QMessageBox::information(this, "Удаление читателя", "Читатель успешно удален");
+        }
+
     } catch (const AppException &ex) {
         QMessageBox::warning(this, "Ошибка", ex.what());
     } catch (const std::exception &ex) {
