@@ -15,6 +15,7 @@
 #include <QList>
 #include <optional>
 #include <QAbstractTableModel>
+#include <QDate>
 
 /**
  * @enum Sex
@@ -35,6 +36,7 @@ struct Reader {
     QString second_name;     ///< Фамилия читателя
     QString third_name;      ///< Отчество читателя
     Sex gender;              ///< Пол читателя
+    QDate reg_date;
     QList<QString> taken_books; ///< Список кодов взятых книг
 };
 
@@ -146,6 +148,10 @@ public:
 
 
     static QString GenerateReaderID(const QList<Reader>& existingReaders);
+
+    bool UpdateBookCodeForAllReaders(const QString &oldCode,
+                                     const QString &newCode);
+
 
 private:
 
