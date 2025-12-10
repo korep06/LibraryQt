@@ -56,6 +56,7 @@ QString buildReportHtmlFromData(const QList<Book> &books,
     int totalReaders        = readers.size();
     int totalTakenNow       = 0;
     int booksTakenThisMonth = 0;
+    int newReadersThisMonth = 0;
 
     for (const Book &b : books) {
         if (b.is_taken)
@@ -63,6 +64,11 @@ QString buildReportHtmlFromData(const QList<Book> &books,
 
         if (b.date_taken.has_value() && isInCurrentMonth(*b.date_taken))
             ++booksTakenThisMonth;
+    }
+
+    for (const Reader &r : readers) {
+        if (r.reg_date.isValid() && isInCurrentMonth(r.reg_date))
+            ++newReadersThisMonth;
     }
 
     QString html;
@@ -104,6 +110,8 @@ QString buildReportHtmlFromData(const QList<Book> &books,
             + QString::number(totalTakenNow) + "</td></tr>";
     html += "<tr><td>Книг выдано в текущем месяце</td><td>"
             + QString::number(booksTakenThisMonth) + "</td></tr>";
+    html += "<tr><td>Читателей записалось в текущем месяце</td><td>"
+            + QString::number(newReadersThisMonth) + "</td></tr>";
     html += "</table>";
 
     // --- Таблица книг ---
@@ -233,24 +241,12 @@ MainWindow::MainWindow(QWidget *parent)
     bool booksLoadedJson = bookModel_->LoadFromFile("books.json");
     if (!booksLoadedJson || bookModel_->GetBooks().isEmpty()) {
         bool booksLoadedXml = bookModel_->LoadFromXml("books.xml");
-        if (!booksLoadedXml || bookModel_->GetBooks().isEmpty()) {
-            bookModel_->AddBook({"B001", "Война и мир", "Лев Толстой",
-                                 true, QDate::fromString("14/04/2006", "dd/MM/yyyy")});
-            bookModel_->AddBook({"B002", "Преступление и наказание",
-                                 "Фёдор Достоевский", false, std::nullopt});
-        }
     }
 
     // --- ЧИТАТЕЛИ: сначала JSON, потом XML, потом тестовые данные ---
     bool readersLoadedJson = readerModel_->LoadFromFile("readers.json");
     if (!readersLoadedJson || readerModel_->GetReaders().isEmpty()) {
         bool readersLoadedXml = readerModel_->LoadFromXml("readers.xml");
-        if (!readersLoadedXml || readerModel_->GetReaders().isEmpty()) {
-            readerModel_->AddReader({"R001", "Иванов", "Иван", "Иванович",
-                                     Sex::Male, {"B002"}});
-            readerModel_->AddReader({"R002", "Петрова", "Анна", "Сергеевна",
-                                     Sex::Female, {}});
-        }
     }
 
 
@@ -276,6 +272,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pb_addReader->setToolTip("Добавить читателя");
     ui->pb_editReader->setToolTip("Редактировать читателя");
     ui->pb_deleteReader->setToolTip("Удалить читателя");
+    ui->pb_get_info_reader->setToolTip("Информация по читателю");
 
     // Соединение действий меню с методами
     connect(ui->mb_act_save_file, &QAction::triggered, this, &MainWindow::act_save_file);
@@ -551,7 +548,14 @@ void MainWindow::act_export_books_html()
 }
 
 
-
+static int countLetters(const QString &s) {
+    int cnt = 0;
+    for (QChar ch : s) {
+        if (ch.isLetter())
+            ++cnt;
+    }
+    return cnt;
+}
 
 /**
  * @brief Проверка корректности данных при добавлении книги.
@@ -563,14 +567,25 @@ void MainWindow::act_export_books_html()
  * @throws InvalidAuthorException если имя автора некорректно
  */
 void MainWindow::checkAddBook(const QString &name, const QString &author) {
-    if (name.trimmed().isEmpty())
+    QString nameTrim = name.trimmed();
+    QString authorTrim = author.trimmed();
+
+    // Разрешаем буквы, цифры, пробел, запятую, точку и дефис
+    QRegularExpression allowedRe("^[A-Za-zА-Яа-яЁё0-9 ,\\.\\-]+$");
+
+    if (nameTrim.isEmpty())
         throw EmptyBookNameException("Введите название книги!");
-    if (author.trimmed().isEmpty())
+    if (!allowedRe.match(nameTrim).hasMatch())
+        throw InvalidBookNameException("Название может содержать только буквы, цифры, пробелы и знаки , . -");
+    // Минимум 3 буквы, чтобы не было ",,," или "---"
+    if (countLetters(nameTrim) < 3)
+        throw InvalidBookNameException("В названии должно быть не меньше 3 букв!");
+    if (authorTrim.isEmpty())
         throw EmptyAuthorException("Введите автора книги!");
-    if (name.trimmed().length() < 3)
-        throw InvalidBookNameException("Слишком короткое название книги!");
-    if (author.trimmed().length() < 3)
-        throw InvalidAuthorException("Некорректное имя автора!");
+    if (!allowedRe.match(authorTrim).hasMatch())
+        throw InvalidAuthorException("Имя автора может содержать только буквы, цифры, пробелы и знаки , . -");
+    if (countLetters(authorTrim) < 3)
+        throw InvalidAuthorException("В имени автора должно быть не меньше 3 букв!");
 }
 
 /**
@@ -589,18 +604,34 @@ void MainWindow::checkEditBook(const QString &name, const QString &author) {
  * @throws EmptyReaderSurnameException если фамилия пустая или некорректная
  * @throws EmptyReaderNameException если имя пустое или некорректное
  */
-void MainWindow::checkAddReader(const QString &surname, const QString &name)
+void MainWindow::checkAddReader(const QString &surname, const QString &name , const std::optional<QString> & thname)
 {
     QRegularExpression validNameRegex("^[A-Za-zА-Яа-яЁё\\- ]+$");
 
-    if (surname.trimmed().isEmpty())
+    QString sTrim = surname.trimmed();
+    QString nTrim = name.trimmed();
+    if (thname.has_value() && thname.value().trimmed().length() > 0) {
+       QString thTrim = thname.value().trimmed();
+        if (!validNameRegex.match(thTrim).hasMatch())
+            throw EmptyReaderSurnameException("Отчество может содержать только буквы, пробел или дефис!");
+        if (countLetters(thTrim) < 3)
+            throw EmptyReaderSurnameException("Отчество должно содержать минимум 3 буквы!");
+    }
+
+
+    if (sTrim.isEmpty())
         throw EmptyReaderSurnameException("Введите фамилию читателя!");
-    if (!validNameRegex.match(surname.trimmed()).hasMatch())
+    if (!validNameRegex.match(sTrim).hasMatch())
         throw EmptyReaderSurnameException("Фамилия может содержать только буквы, пробел или дефис!");
-    if (name.trimmed().isEmpty())
+    if (countLetters(sTrim) < 3)
+        throw EmptyReaderSurnameException("Фамилия должна содержать минимум 3 буквы!");
+
+    if (nTrim.isEmpty())
         throw EmptyReaderNameException("Введите имя читателя!");
-    if (!validNameRegex.match(name.trimmed()).hasMatch())
+    if (!validNameRegex.match(nTrim).hasMatch())
         throw EmptyReaderNameException("Имя может содержать только буквы, пробел или дефис!");
+    if (countLetters(nTrim) < 3)
+        throw EmptyReaderNameException("Имя должно содержать минимум 3 буквы!");
 }
 
 /**
@@ -679,7 +710,7 @@ void MainWindow::act_add_reader()
 
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            checkAddReader(firstEdit.text(), secondEdit.text());
+            checkAddReader(firstEdit.text(), secondEdit.text() , thirdEdit.text() );
             dialog.accept();
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
@@ -695,6 +726,7 @@ void MainWindow::act_add_reader()
         reader.second_name = secondEdit.text().trimmed();
         reader.third_name = thirdEdit.text().trimmed();
         reader.gender = sexCombo.currentData().toBool() ? Sex::Male : Sex::Female;
+        reader.reg_date = QDate::currentDate();
         readerModel_->AddReader(reader);
 
         QMessageBox::information(this, "Добавление", "Читатель успешно добавлен!");
@@ -727,11 +759,13 @@ void MainWindow::act_edit_book()
     dialog.setWindowTitle("Редактировать книгу");
 
     QFormLayout form(&dialog);
+    QLineEdit codeEdit(book.code);
     QLineEdit nameEdit(book.name);
     QLineEdit authorEdit(book.author);
     QLabel statusLabel(book.is_taken ? "Выдана" : "В наличии");
 
     QPushButton okButton("Сохранить"), cancelButton("Отмена");
+    form.addRow("Шифр:" , &codeEdit);
     form.addRow("Название:", &nameEdit);
     form.addRow("Автор:", &authorEdit);
     form.addRow("Статус:", &statusLabel);
@@ -741,6 +775,25 @@ void MainWindow::act_edit_book()
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
             checkEditBook(nameEdit.text(), authorEdit.text());
+
+            QString newCode = codeEdit.text().trimmed();
+            if (newCode.isEmpty())
+                throw InvalidInputException("Код книги не может быть пустым");
+
+
+            QRegularExpression codeRe("^B[0-9]{3,5}$");
+            if (!codeRe.match(newCode).hasMatch()) {
+                 throw InvalidInputException("Неверный формат кода книги (ожидается BXXXX)");
+            }
+
+            // Проверка уникальности кода
+            if (newCode != book.code) {
+                auto existingIdx = bookModel_->FindBookIndex(newCode);
+                if (existingIdx.has_value()) {
+                    throw InvalidInputException("Книга с таким кодом уже существует");
+                }
+            }
+
             dialog.accept();
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
@@ -750,11 +803,19 @@ void MainWindow::act_edit_book()
     });
 
     if (dialog.exec() == QDialog::Accepted) {
+        QString oldCode = book.code;
+        QString newCode = codeEdit.text().trimmed();
+
+        book.code = newCode;
         book.name = nameEdit.text().trimmed();
         book.author = authorEdit.text().trimmed();
         book.is_taken = book.is_taken;
         book.date_taken = book.date_taken;
         bookModel_->UpdateBookAt(row, book);
+
+        if (newCode != oldCode) {
+            readerModel_->UpdateBookCodeForAllReaders(oldCode, newCode);
+        }
 
         QMessageBox::information(this, "Редактирование книги", "Изменения применены");
     }
@@ -804,7 +865,7 @@ void MainWindow::act_edit_reader()
     connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            checkAddReader(firstEdit.text(), secondEdit.text());
+            checkAddReader(firstEdit.text(), secondEdit.text() , thirdEdit.text());
             dialog.accept();
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
@@ -990,7 +1051,8 @@ void MainWindow::act_search_book() {
     form.addRow("Код или название:", &searchEdit);
     form.addRow(&okButton, &cancelButton);
 
-    connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+    connect(&cancelButton, &QPushButton::clicked,
+            &dialog, &QDialog::reject);
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
             checkBookSearch(searchEdit.text());
@@ -1002,21 +1064,67 @@ void MainWindow::act_search_book() {
         }
     });
 
-    if (dialog.exec() == QDialog::Accepted) {
-        QString query = searchEdit.text().trimmed();
-        try {
-            Book book = bookModel_->FindBook(query);
-            if (book.code.isEmpty())
-                throw BookNotFoundException("Книга не найдена!");
+    if (dialog.exec() != QDialog::Accepted)
+        return;
 
-            QMessageBox::information(this, "Найдено",
-                                     QString("Код %1\nНазвание: %2\nАвтор: %3\nСостояние: %4")
-                                         .arg(book.code, book.name, book.author, book.is_taken ? "Выдана" : "Свободна"));
-        } catch (const AppException &ex) {
-            QMessageBox::warning(this, "Ошибка", ex.what());
-        } catch (const std::exception &ex) {
-            QMessageBox::warning(this, "Ошибка", ex.what());
+    QString query = searchEdit.text().trimmed();
+
+    try {
+        // 1️⃣ Сначала пробуем найти по коду (точное совпадение)
+        Book book = bookModel_->FindBook(query);
+        if (!book.code.isEmpty()) {
+            QMessageBox::information(
+                this, "Найдено",
+                QString("Код: %1\nНазвание: %2\nАвтор: %3\nСостояние: %4")
+                    .arg(book.code,
+                         book.name,
+                         book.author,
+                         book.is_taken ? "Выдана" : "Свободна"));
+            return;
         }
+
+        // 2️⃣ Если по коду не нашли — ищем по названию (подстрока, без учёта регистра)
+        const QList<Book> &books = bookModel_->GetBooks();
+        QList<Book> matches;
+        for (const Book &b : books) {
+            if (b.name.contains(query, Qt::CaseInsensitive)) {
+                matches.append(b);
+            }
+        }
+
+        if (matches.isEmpty())
+            throw BookNotFoundException("Книга не найдена!");
+
+        // 3️⃣ Одна книга по названию
+        if (matches.size() == 1) {
+            const Book &b = matches.first();
+            QMessageBox::information(
+                this, "Найдена книга",
+                QString("Код: %1\nНазвание: %2\nАвтор: %3\nСостояние: %4")
+                    .arg(b.code,
+                         b.name,
+                         b.author,
+                         b.is_taken ? "Выдана" : "Свободна"));
+        } else {
+            // 4️⃣ Несколько книг — показываем список
+            QStringList lines;
+            for (const Book &b : matches) {
+                lines << QString("%1 — %2 (%3) [%4]")
+                             .arg(b.code,
+                                  b.name,
+                                  b.author,
+                                  b.is_taken ? "выдана" : "в наличии");
+            }
+
+            QMessageBox::information(
+                this, "Найдено несколько книг",
+                "Под ваш запрос найдено несколько книг:\n\n"
+                    + lines.join("\n"));
+        }
+    } catch (const AppException &ex) {
+        QMessageBox::warning(this, "Ошибка", ex.what());
+    } catch (const std::exception &ex) {
+        QMessageBox::warning(this, "Ошибка", ex.what());
     }
 }
 
@@ -1075,8 +1183,57 @@ void MainWindow::act_search_reader() {
  * @brief Слот: получение информации (пока не реализовано).
  */
 void MainWindow::act_get_info() {
-    QMessageBox::information(this, "Информация", "Функция пока не реализована");
+    QModelIndex index = ui->tbl_view_reader->currentIndex();
+    if (!index.isValid()) {
+        QMessageBox::warning(this, "Информация",
+                             "Сначала выберите читателя в таблице");
+        return;
+    }
+
+    // Если таблица завернута в proxy — размэппим
+    if (auto proxy = qobject_cast<QSortFilterProxyModel*>(ui->tbl_view_reader->model())) {
+        index = proxy->mapToSource(index);
+    }
+
+    const QList<Reader> &readers = readerModel_->GetReaders();
+    int row = index.row();
+    if (row < 0 || row >= readers.size())
+        return;
+
+    const Reader &r = readers[row];
+
+    QString fio = r.first_name + " " + r.second_name + " " + r.third_name;
+    QString genderStr = (r.gender == Sex::Male) ? "Мужской" : "Женский";
+
+    QString msg;
+    msg += "ID: " + r.ID + "\n";
+    msg += "ФИО: " + fio + "\n";
+    msg += "Пол: " + genderStr + "\n";
+
+    if (r.reg_date.isValid())
+        msg += "Дата регистрации: " + r.reg_date.toString("dd.MM.yyyy") + "\n";
+
+    msg += "\nКниги на руках:\n";
+
+    if (r.taken_books.isEmpty()) {
+        msg += "— нет выданных книг";
+    } else {
+        QStringList lines;
+        for (const QString &code : r.taken_books) {
+            Book b = bookModel_->FindBook(code);
+            if (b.code.isEmpty()) {
+                lines << QString("%1 — (книга не найдена в каталоге)").arg(code);
+            } else {
+                lines << QString("%1 — %2 (%3)")
+                             .arg(b.code, b.name, b.author);
+            }
+        }
+        msg += lines.join("\n");
+    }
+
+    QMessageBox::information(this, "Информация о читателе", msg);
 }
+
 
 /**
  * @brief Обновление состояния действий в зависимости от выбранной вкладки.
@@ -1156,3 +1313,9 @@ void MainWindow::act_return_book() {
 void MainWindow::on_pb_getBook_clicked() {
     act_return_book();
 }
+
+void MainWindow::on_pb_get_info_reader_clicked()
+{
+    act_get_info();
+}
+

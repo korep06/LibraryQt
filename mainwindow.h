@@ -70,12 +70,14 @@ private slots:
 
     void on_pb_giveBook_clicked();
 
+    void on_pb_get_info_reader_clicked();
+
 private:
     Ui::MainWindow *ui;
     BookModel *bookModel_;
     ReaderModel *readerModel_;
 
-    void checkAddReader(const QString &surname, const QString &name);
+    void checkAddReader(const QString &surname, const QString &name , const std::optional<QString> & thname);
     void checkBookName(const QString &name);
     void checkAddBook(const QString &name , const QString &author);
     void checkBookSearch(const QString &query);
