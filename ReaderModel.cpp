@@ -241,6 +241,11 @@ bool ReaderModel::LoadFromFile(const QString& filePath)
         reader.second_name = obj["second_name"].toString();
         reader.third_name = obj["third_name"].toString();
         reader.gender = (obj["gender"].toInt() == 0 ? Sex::Female : Sex::Male);
+        QString regStr = obj["reg_date"].toString();
+        if (!regStr.isEmpty())
+            reader.reg_date = QDate::fromString(regStr, "dd/MM/yyyy");
+        else
+            reader.reg_date = QDate();
 
         // Загрузка списка взятых книг
         auto arr = obj["taken_books"].toArray();
@@ -273,6 +278,10 @@ bool ReaderModel::SaveToFile(const QString& filePath)
         obj["second_name"] = reader.second_name;
         obj["third_name"] = reader.third_name;
         obj["gender"] = reader.gender;
+        obj["reg_date"] =
+            reader.reg_date.isValid()
+                ? reader.reg_date.toString("dd/MM/yyyy")
+                : "";
 
         // Преобразуем QList<QString> в QJsonArray
         QJsonArray booksArray;
@@ -373,6 +382,13 @@ bool ReaderModel::LoadFromXml(const QString& filePath)
                         reader.gender =
                             (text.trimmed() == "1" ? Sex::Male : Sex::Female);
                     }
+                    else if (tag == "reg_date") {
+                        QString t = text.trimmed();
+                        if (t.isEmpty())
+                            reader.reg_date = QDate();
+                        else
+                            reader.reg_date = QDate::fromString(t, "dd/MM/yyyy");
+                    }
                 }
             }
 
@@ -411,6 +427,12 @@ bool ReaderModel::SaveToXml(const QString& filePath)
         xml.writeTextElement("second_name", reader.second_name);
         xml.writeTextElement("third_name", reader.third_name);
         xml.writeTextElement("gender", reader.gender == Sex::Male ? "1" : "0");
+        xml.writeTextElement(
+            "reg_date",
+            reader.reg_date.isValid()
+                ? reader.reg_date.toString("dd/MM/yyyy")
+                : ""
+            );
 
         xml.writeStartElement("taken_books");
         for (const auto& bookCode : reader.taken_books) {
@@ -424,4 +446,30 @@ bool ReaderModel::SaveToXml(const QString& filePath)
     xml.writeEndElement(); // readers
     xml.writeEndDocument();
     return !xml.hasError();
+}
+
+bool ReaderModel::UpdateBookCodeForAllReaders(const QString &oldCode,
+                                              const QString &newCode)
+{
+    bool changedAny = false;
+
+    for (int i = 0; i < readers_.size(); ++i) {
+        bool rowChanged = false;
+
+        for (QString &code : readers_[i].taken_books) {
+            if (code == oldCode) {
+                code = newCode;
+                rowChanged = true;
+                changedAny = true;
+            }
+        }
+
+        if (rowChanged) {
+            QModelIndex topLeft = index(i, 0);
+            QModelIndex bottomRight = index(i, columnCount() - 1);
+            emit dataChanged(topLeft, bottomRight);
+        }
+    }
+
+    return changedAny;
 }
