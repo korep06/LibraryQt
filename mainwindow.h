@@ -77,13 +77,6 @@ private:
     BookModel *bookModel_;
     ReaderModel *readerModel_;
 
-    void checkAddReader(const QString &surname, const QString &name , const std::optional<QString> & thname);
-    void checkBookName(const QString &name);
-    void checkAddBook(const QString &name , const QString &author);
-    void checkBookSearch(const QString &query);
-    void checkGiveOutInput(const QString &code, const QString &readerID);
-    void checkEditBook(const QString &name, const QString &author);
-
     QString buildFullReportHtml() const;
 };
 

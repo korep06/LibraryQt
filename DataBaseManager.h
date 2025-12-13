@@ -23,6 +23,7 @@ private:
     ~DatabaseManager();
 
     bool initSchema();
+    void closeConnection();
 
     QSqlDatabase db_;
 };

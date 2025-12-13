@@ -31,8 +31,54 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <thread>
+#include <optional>
+
 
 static auto logMainWindow = spdlog::get("main");
+
+namespace {
+
+// Чтобы не копипастить 100 раз одно и то же (proxy -> source)
+QModelIndex mapToSourceIndex(const QAbstractItemView* view, const QModelIndex& idx)
+{
+    if (!view || !idx.isValid())
+        return idx;
+
+    if (auto proxy = qobject_cast<const QSortFilterProxyModel*>(view->model()))
+        return proxy->mapToSource(idx);
+
+    return idx;
+}
+
+void showExceptionBox(QWidget* parent, const QString& title, const std::exception& ex)
+{
+    QMessageBox::warning(parent, title, ex.what());
+    spdlog::warn("{}: {}", title.toStdString(), ex.what());
+}
+
+static bool saveAllData(BookModel* books, ReaderModel* readers)
+{
+    if (!books || !readers)
+        return false;
+
+    const bool okBooksJson   = books->SaveToFile("books.json");
+    const bool okReadersJson = readers->SaveToFile("readers.json");
+    const bool okBooksXml    = books->SaveToXml("books.xml");
+    const bool okReadersXml  = readers->SaveToXml("readers.xml");
+
+    return okBooksJson && okReadersJson && okBooksXml && okReadersXml;
+}
+
+// Узкий helper: выставить ошибку и разбудить потоки (не меняет логику)
+template <typename SharedT>
+void setThreadError(SharedT& shared, const QString& msg)
+{
+    QMutexLocker locker(&shared.mutex);
+    shared.error = msg;
+    shared.cond.wakeAll();
+}
+
+} // namespace
 
 
 namespace {
@@ -325,14 +371,14 @@ MainWindow::MainWindow(QWidget *parent)
  */
 MainWindow::~MainWindow()
 {
-    bookModel_->SaveToFile("books.json");
-    readerModel_->SaveToFile("readers.json");
-
-    bookModel_->SaveToXml("books.xml");
-    readerModel_->SaveToXml("readers.xml");
+    const bool ok = saveAllData(bookModel_, readerModel_);
+    if (!ok) {
+        spdlog::warn("Не удалось сохранить данные при закрытии приложения");
+    }
 
     delete ui;
 }
+
 
 /**
  * @brief Слоты для кнопок (делегируют вызов соответствующих действий)
@@ -352,19 +398,16 @@ void MainWindow::on_pb_giveBook_clicked() { act_giveout_book(); }
  */
 void MainWindow::act_save_file()
 {
-    bool okBooksJson   = bookModel_->SaveToFile("books.json");
-    bool okReadersJson = readerModel_->SaveToFile("readers.json");
+    const bool ok = saveAllData(bookModel_, readerModel_);
 
-    bool okBooksXml    = bookModel_->SaveToXml("books.xml");
-    bool okReadersXml  = readerModel_->SaveToXml("readers.xml");
-
-    if (okBooksJson && okReadersJson && okBooksXml && okReadersXml) {
+    if (ok) {
         QMessageBox::information(this, "Успех", "Данные сохранены (JSON и XML)");
     } else {
         QMessageBox::warning(this, "Ошибка",
                              "Не удалось сохранить данные во все файлы (JSON/XML)");
     }
 }
+
 
 /**
  * @brief Закрывает приложение с сохранением данных.
@@ -411,6 +454,7 @@ void MainWindow::act_export_books_pdf()
 void MainWindow::act_export_books_html()
 {
     spdlog::info("Старт многопоточного экспорта HTML-отчёта");
+
     QString fileName = QFileDialog::getSaveFileName(
         this,
         "Сохранить отчёт в HTML",
@@ -441,93 +485,80 @@ void MainWindow::act_export_books_html()
 
     SharedData shared;
 
-
     std::thread t1([&shared, booksSnapshot, readersSnapshot]() {
         spdlog::debug("t1: начало копирования данных");
-        QMutexLocker lock(&shared.mutex);
-
-        shared.books   = booksSnapshot;
-        shared.readers = readersSnapshot;
-        shared.loaded  = true;
-
+        {
+            QMutexLocker lock(&shared.mutex);
+            shared.books   = booksSnapshot;
+            shared.readers = readersSnapshot;
+            shared.loaded  = true;
+        }
         shared.cond.wakeAll();
         spdlog::debug("t1: копирование завершено, книг={}, читателей={}",
                       booksSnapshot.size(), readersSnapshot.size());
     });
 
-
     std::thread t2([&shared]() {
         spdlog::debug("t2: ожидание данных для сортировки");
-        shared.mutex.lock();
-        while (!shared.loaded && shared.error.isEmpty()) {
-            shared.cond.wait(&shared.mutex);
+
+        QList<Book>   books;
+        QList<Reader> readers;
+
+        {
+            QMutexLocker lock(&shared.mutex);
+            while (!shared.loaded && shared.error.isEmpty())
+                shared.cond.wait(&shared.mutex);
+
+            if (!shared.error.isEmpty())
+                return;
+
+            books   = shared.books;
+            readers = shared.readers;
         }
-
-        if (!shared.error.isEmpty()) {
-            shared.mutex.unlock();
-            return;
-        }
-
-
-        QList<Book>   books   = shared.books;
-        QList<Reader> readers = shared.readers;
-        shared.mutex.unlock();
-
 
         std::sort(books.begin(), books.end(),
-                  [](const Book &a, const Book &b) {
-                      return a.name < b.name;
-                  });
+                  [](const Book &a, const Book &b) { return a.name < b.name; });
 
         std::sort(readers.begin(), readers.end(),
                   [](const Reader &a, const Reader &b) {
-                      // пример: по фамилии, потом по имени
                       if (a.second_name != b.second_name)
                           return a.second_name < b.second_name;
                       return a.first_name < b.first_name;
                   });
 
-        shared.mutex.lock();
-        shared.sortedBooks   = books;
-        shared.sortedReaders = readers;
-        shared.edited = true;
+        {
+            QMutexLocker lock(&shared.mutex);
+            shared.sortedBooks   = books;
+            shared.sortedReaders = readers;
+            shared.edited = true;
+        }
         shared.cond.wakeAll();
-        shared.mutex.unlock();
         spdlog::debug("t2: сортировка завершена");
     });
 
-
     std::thread t3([&shared, fileName]() {
         spdlog::debug("t3: ожидание отсортированных данных");
+
         QList<Book>   books;
         QList<Reader> readers;
 
-        shared.mutex.lock();
-        while (!shared.edited && shared.error.isEmpty()) {
-            shared.cond.wait(&shared.mutex);
+        {
+            QMutexLocker lock(&shared.mutex);
+            while (!shared.edited && shared.error.isEmpty())
+                shared.cond.wait(&shared.mutex);
+
+            if (!shared.error.isEmpty())
+                return;
+
+            books   = shared.sortedBooks;
+            readers = shared.sortedReaders;
         }
 
-        if (!shared.error.isEmpty()) {
-            shared.mutex.unlock();
-            return;
-        }
-
-        books   = shared.sortedBooks;
-        readers = shared.sortedReaders;
-        shared.mutex.unlock();
-
-
-        BookModel   reportBooksModel;
-        ReaderModel reportReadersModel;
-
-        QString html = buildReportHtmlFromData(books, readers);
-
+        const QString html = buildReportHtmlFromData(books, readers);
 
         QFile file(fileName);
         if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            shared.mutex.lock();
-            shared.error = "Не удалось открыть файл для записи HTML-отчёта";
-            shared.mutex.unlock();
+            setThreadError(shared, "Не удалось открыть файл для записи HTML-отчёта");
             return;
         }
 
@@ -538,26 +569,25 @@ void MainWindow::act_export_books_html()
         out.setCodec("UTF-8");
 #endif
         out << html;
-        spdlog::info("t3: отчёт записан в файл {}", fileName.toStdString());
         file.close();
-    });
 
+        spdlog::info("t3: отчёт записан в файл {}", fileName.toStdString());
+    });
 
     t1.join();
     t2.join();
     t3.join();
 
-
     if (!shared.error.isEmpty()) {
         QMessageBox::warning(this, "Ошибка", shared.error);
-        spdlog::warn("Экспорт завершился с ошибкой: {}",
-                     shared.error.toStdString());
+        spdlog::warn("Экспорт завершился с ошибкой: {}", shared.error.toStdString());
     } else {
         spdlog::info("Экспорт HTML-отчёта успешно завершён");
         QMessageBox::information(this, "Отчёт",
                                  "HTML-отчёт (многопоточный) успешно сохранён");
     }
 }
+
 
 
 
@@ -639,7 +669,12 @@ void MainWindow::act_add_reader()
 
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            InputValid::checkAddReader(firstEdit.text(), secondEdit.text() , thirdEdit.text() );
+            const QString th = thirdEdit.text().trimmed();
+            const std::optional<QString> thOpt = th.isEmpty()
+                                                     ? std::nullopt
+                                                     : std::optional<QString>(th);
+
+            InputValid::checkAddReader(firstEdit.text(), secondEdit.text(), thOpt);
             dialog.accept();
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
@@ -651,9 +686,9 @@ void MainWindow::act_add_reader()
     if (dialog.exec() == QDialog::Accepted) {
         Reader reader;
         reader.ID = ReaderModel::GenerateReaderID(readerModel_->GetReaders());
-        reader.first_name = firstEdit.text().trimmed();
+        reader.first_name  = firstEdit.text().trimmed();
         reader.second_name = secondEdit.text().trimmed();
-        reader.third_name = thirdEdit.text().trimmed();
+        reader.third_name  = thirdEdit.text().trimmed();
         reader.gender = sexCombo.currentData().toBool() ? Sex::Male : Sex::Female;
         reader.reg_date = QDate::currentDate();
         readerModel_->AddReader(reader);
@@ -673,14 +708,13 @@ void MainWindow::act_edit_book()
         return;
     }
 
-    // Маппим индекс из proxy в исходную модель для корректности отображения
-    if (auto proxy = qobject_cast<QSortFilterProxyModel*>(ui->tbl_view_book->model())) {
+    if (auto proxy = qobject_cast<QSortFilterProxyModel*>(ui->tbl_view_book->model()))
         index = proxy->mapToSource(index);
-    }
 
-    int row = index.row();
+    const int row = index.row();
     const QList<Book> &books = bookModel_->GetBooks();
-    if (row < 0 || row >= books.size()) return;
+    if (row < 0 || row >= books.size())
+        return;
 
     Book book = books[row];
 
@@ -694,33 +728,30 @@ void MainWindow::act_edit_book()
     QLabel statusLabel(book.is_taken ? "Выдана" : "В наличии");
 
     QPushButton okButton("Сохранить"), cancelButton("Отмена");
-    form.addRow("Шифр:" , &codeEdit);
+    form.addRow("Шифр:", &codeEdit);
     form.addRow("Название:", &nameEdit);
     form.addRow("Автор:", &authorEdit);
     form.addRow("Статус:", &statusLabel);
     form.addRow(&okButton, &cancelButton);
 
     connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
             InputValid::checkEditBook(nameEdit.text(), authorEdit.text());
 
-            QString newCode = codeEdit.text().trimmed();
+            QString newCode = codeEdit.text().trimmed().toUpper();
             if (newCode.isEmpty())
                 throw InvalidInputException("Код книги не может быть пустым");
 
+            static const QRegularExpression codeRe("^B[0-9]{3,5}$");
+            if (!codeRe.match(newCode).hasMatch())
+                throw InvalidInputException("Неверный формат кода книги (ожидается BXXXX)");
 
-            QRegularExpression codeRe("^B[0-9]{3,5}$");
-            if (!codeRe.match(newCode).hasMatch()) {
-                 throw InvalidInputException("Неверный формат кода книги (ожидается BXXXX)");
-            }
-
-            // Проверка уникальности кода
             if (newCode != book.code) {
                 auto existingIdx = bookModel_->FindBookIndex(newCode);
-                if (existingIdx.has_value()) {
+                if (existingIdx.has_value())
                     throw InvalidInputException("Книга с таким кодом уже существует");
-                }
             }
 
             dialog.accept();
@@ -732,23 +763,22 @@ void MainWindow::act_edit_book()
     });
 
     if (dialog.exec() == QDialog::Accepted) {
-        QString oldCode = book.code;
-        QString newCode = codeEdit.text().trimmed();
+        const QString oldCode = book.code;
+        const QString newCode = codeEdit.text().trimmed().toUpper();
 
-        book.code = newCode;
-        book.name = nameEdit.text().trimmed();
+        book.code   = newCode;
+        book.name   = nameEdit.text().trimmed();
         book.author = authorEdit.text().trimmed();
-        book.is_taken = book.is_taken;
-        book.date_taken = book.date_taken;
+
         bookModel_->UpdateBookAt(row, book);
 
-        if (newCode != oldCode) {
+        if (newCode != oldCode)
             readerModel_->UpdateBookCodeForAllReaders(oldCode, newCode);
-        }
 
         QMessageBox::information(this, "Редактирование книги", "Изменения применены");
     }
 }
+
 
 /**
  * @brief Слот: редактирование читателя через диалог.
@@ -761,14 +791,13 @@ void MainWindow::act_edit_reader()
         return;
     }
 
-    // Маппим индекс из proxy в исходную модель для корректности отображения
-    if (auto proxy = qobject_cast<QSortFilterProxyModel*>(ui->tbl_view_reader->model())) {
+    if (auto proxy = qobject_cast<QSortFilterProxyModel*>(ui->tbl_view_reader->model()))
         index = proxy->mapToSource(index);
-    }
 
-    int row = index.row();
+    const int row = index.row();
     const QList<Reader> &readers = readerModel_->GetReaders();
-    if (row < 0 || row >= readers.size()) return;
+    if (row < 0 || row >= readers.size())
+        return;
 
     Reader reader = readers[row];
 
@@ -776,9 +805,10 @@ void MainWindow::act_edit_reader()
     dialog.setWindowTitle("Редактировать читателя");
 
     QFormLayout form(&dialog);
-    QLineEdit firstEdit(reader.first_name);
-    QLineEdit secondEdit(reader.second_name);
+    QLineEdit firstEdit(reader.second_name); // фамилия
+    QLineEdit secondEdit(reader.first_name); // имя
     QLineEdit thirdEdit(reader.third_name);
+
     QComboBox sexCombo;
     sexCombo.addItem("Мужчина", true);
     sexCombo.addItem("Женщина", false);
@@ -792,9 +822,15 @@ void MainWindow::act_edit_reader()
     form.addRow(&okButton, &cancelButton);
 
     connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            InputValid::checkAddReader(firstEdit.text(), secondEdit.text() , thirdEdit.text());
+            const QString th = thirdEdit.text().trimmed();
+            const std::optional<QString> thOpt = th.isEmpty()
+                                                     ? std::nullopt
+                                                     : std::optional<QString>(th);
+
+            InputValid::checkAddReader(firstEdit.text(), secondEdit.text(), thOpt);
             dialog.accept();
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
@@ -804,10 +840,11 @@ void MainWindow::act_edit_reader()
     });
 
     if (dialog.exec() == QDialog::Accepted) {
-        reader.first_name = firstEdit.text().trimmed();
-        reader.second_name = secondEdit.text().trimmed();
-        reader.third_name = thirdEdit.text().trimmed();
+        reader.second_name = firstEdit.text().trimmed(); // фамилия
+        reader.first_name  = secondEdit.text().trimmed(); // имя
+        reader.third_name  = thirdEdit.text().trimmed();
         reader.gender = sexCombo.currentData().toBool() ? Sex::Male : Sex::Female;
+
         readerModel_->UpdateReaderAt(row, reader);
 
         QMessageBox::information(this, "Редактирование читателя", "Изменения применены!");
@@ -815,10 +852,12 @@ void MainWindow::act_edit_reader()
 }
 
 
+
 /**
  * @brief Слот: выдача книги читателю.
  */
-void MainWindow::act_giveout_book() {
+void MainWindow::act_giveout_book()
+{
     QDialog dialog(this);
     dialog.setWindowTitle("Выдать книгу");
 
@@ -832,6 +871,7 @@ void MainWindow::act_giveout_book() {
     form.addRow(&okButton, &cancelButton);
 
     connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
             InputValid::checkGiveOutInput(bookCodeEdit.text(), readerIdEdit.text());
@@ -843,18 +883,18 @@ void MainWindow::act_giveout_book() {
         }
     });
 
-    if (dialog.exec() != QDialog::Accepted) return;
+    if (dialog.exec() != QDialog::Accepted)
+        return;
 
-    QString code = bookCodeEdit.text().trimmed();
-    QString readerID = readerIdEdit.text().trimmed();
+    const QString code     = bookCodeEdit.text().trimmed().toUpper();
+    const QString readerID = readerIdEdit.text().trimmed().toUpper();
 
     try {
         auto bookIndexOpt = bookModel_->FindBookIndex(code);
         if (!bookIndexOpt.has_value())
             throw BookNotFoundException("Книга не найдена");
 
-        int bookIndex = bookIndexOpt.value();
-        Book book = bookModel_->GetBooks().at(bookIndex);
+        const Book book = bookModel_->GetBooks().at(bookIndexOpt.value());
         if (book.is_taken)
             throw BookAlreadyTakenException("Эта книга уже выдана");
 
@@ -862,9 +902,12 @@ void MainWindow::act_giveout_book() {
         if (!readerIndexOpt.has_value())
             throw ReaderNotFoundException("Читатель не найден");
 
-        readerModel_->AddLinkBook(readerID, code);
+        if (!readerModel_->AddLinkBook(readerID, code))
+            throw InvalidInputException("Не удалось закрепить книгу за читателем");
+
         std::optional<QDate> now_date = QDate::currentDate();
-        bookModel_->SetBookTaken(code, true, now_date);
+        if (!bookModel_->SetBookTaken(code, true, now_date))
+            throw InvalidInputException("Не удалось обновить статус книги");
 
         QMessageBox::information(this, "Успех", "Книга успешно выдана!");
     } catch (const AppException &ex) {
@@ -874,73 +917,94 @@ void MainWindow::act_giveout_book() {
     }
 }
 
+
 /**
  * @brief Слот: удаление книги с подтверждением.
  */
-void MainWindow::act_delete_book() {
+void MainWindow::act_delete_book()
+{
     QModelIndex index = ui->tbl_view_book->currentIndex();
     if (!index.isValid()) {
         QMessageBox::warning(this, "Ошибка", "Выберите книгу для удаления");
         return;
     }
-        // Маппим индекс из proxy в исходную модель для корректности отображения
-    if (auto proxy = qobject_cast<QSortFilterProxyModel*>(ui->tbl_view_book->model())) {
-        index = proxy->mapToSource(index);
-    }
 
-    QString code = bookModel_->data(index.siblingAtColumn(0), Qt::DisplayRole).toString();
+    index = mapToSourceIndex(ui->tbl_view_book, index);
 
-    int ret = QMessageBox::question(this, "Подтвердите", QString("Удалить книгу %1 - %2 ?").arg(code).arg(bookModel_->FindBook(code).name),
-                                    QMessageBox::Yes | QMessageBox::No);
-    if (ret != QMessageBox::Yes) return;
+    const QString code = bookModel_->data(index.siblingAtColumn(0), Qt::DisplayRole).toString().trimmed();
+
+    const Book book = bookModel_->FindBook(code); // может быть пустая, если не найдена
+    const QString title = book.name.isEmpty() ? QString("(название неизвестно)") : book.name;
+
+    const int ret = QMessageBox::question(
+        this,
+        "Подтвердите",
+        QString("Удалить книгу %1 - %2 ?").arg(code, title),
+        QMessageBox::Yes | QMessageBox::No
+        );
+
+    if (ret != QMessageBox::Yes)
+        return;
 
     try {
-        bool ok = bookModel_->RemoveBook(code);
+        const bool ok = bookModel_->RemoveBook(code);
         if (!ok) {
-            QMessageBox::warning(this, "Ошибка", "Не удалось удалить книгу (возможно, книга не найдена или привязана к читателю)");
-        }
-        else {
+            QMessageBox::warning(this, "Ошибка",
+                                 "Не удалось удалить книгу (возможно, книга не найдена или привязана к читателю)");
+        } else {
             QMessageBox::information(this, "Удаление книги", "Книга успешно удалена");
         }
-
     } catch (const AppException &ex) {
         QMessageBox::warning(this, "Ошибка", ex.what());
     } catch (const std::exception &ex) {
         QMessageBox::warning(this, "Ошибка", ex.what());
     }
-
 }
+
+
 
 /**
  * @brief Слот: удаление читателя с подтверждением.
  */
-void MainWindow::act_delete_reader() {
+void MainWindow::act_delete_reader()
+{
     QModelIndex index = ui->tbl_view_reader->currentIndex();
     if (!index.isValid()) {
         QMessageBox::warning(this, "Ошибка", "Выберите читателя для удаления");
         return;
     }
 
-    // Маппим индекс из proxy в исходную модель для корректности отображения
-    if (auto proxy = qobject_cast<QSortFilterProxyModel*>(ui->tbl_view_reader->model())) {
-        index = proxy->mapToSource(index);
+    index = mapToSourceIndex(ui->tbl_view_reader, index);
+
+    const QString id = readerModel_->data(index.siblingAtColumn(0), Qt::DisplayRole).toString();
+
+    // Было опасно: FindReader(id)->... (если не найдено — краш)
+    const auto readerOpt = readerModel_->FindReader(id);
+
+    QString prompt;
+    if (readerOpt.has_value()) {
+        prompt = QString("Удалить читателя %1 - %2 %3 ?")
+                     .arg(id)
+                     .arg(readerOpt->second_name)
+                     .arg(readerOpt->first_name);
+    } else {
+        // На всякий случай: пусть удаление всё равно возможно, но без ФИО
+        prompt = QString("Удалить читателя %1 ?").arg(id);
     }
 
-    QString id = readerModel_->data(index.siblingAtColumn(0), Qt::DisplayRole).toString();
-
-    int ret = QMessageBox::question(this, "Подтвердите", QString("Удалить читателя %1 - %2 %3 ?").arg(id).arg(readerModel_->FindReader(id)->second_name ).arg(readerModel_->FindReader(id)->first_name),
+    int ret = QMessageBox::question(this, "Подтвердите", prompt,
                                     QMessageBox::Yes | QMessageBox::No);
-    if (ret != QMessageBox::Yes) return;
+    if (ret != QMessageBox::Yes)
+        return;
 
     try {
         bool ok = readerModel_->RemoveReader(id);
         if (!ok) {
-            QMessageBox::warning(this, "Ошибка", "Не удалось удалить читателя (возможно, читатель не найден или есть выданные книги)");
+            QMessageBox::warning(this, "Ошибка",
+                                 "Не удалось удалить читателя (возможно, читатель не найден или есть выданные книги)");
+        } else {
+            QMessageBox::information(this, "Удаление читателя", "Читатель успешно удален");
         }
-        else {
-           QMessageBox::information(this, "Удаление читателя", "Читатель успешно удален");
-        }
-
     } catch (const AppException &ex) {
         QMessageBox::warning(this, "Ошибка", ex.what());
     } catch (const std::exception &ex) {
@@ -948,21 +1012,25 @@ void MainWindow::act_delete_reader() {
     }
 }
 
+
+
 /**
  * @brief Слот: поиск книги по коду или названию.
  */
-void MainWindow::act_search_book() {
+void MainWindow::act_search_book()
+{
     QDialog dialog(this);
     dialog.setWindowTitle("Поиск книги");
 
     QFormLayout form(&dialog);
     QLineEdit searchEdit;
     QPushButton okButton("Найти"), cancelButton("Отмена");
+
     form.addRow("Код или название:", &searchEdit);
     form.addRow(&okButton, &cancelButton);
 
-    connect(&cancelButton, &QPushButton::clicked,
-            &dialog, &QDialog::reject);
+    connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
             InputValid::checkBookSearch(searchEdit.text());
@@ -970,88 +1038,89 @@ void MainWindow::act_search_book() {
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка ввода", ex.what());
         } catch (const std::exception &ex) {
-            QMessageBox::warning(&dialog, "Ошибка ввода", ex.what());
+            showExceptionBox(&dialog, "Ошибка ввода", ex);
         }
     });
 
     if (dialog.exec() != QDialog::Accepted)
         return;
 
-    QString query = searchEdit.text().trimmed();
+    const QString queryRaw = searchEdit.text().trimmed();
+    const QString queryCode = queryRaw.toUpper(); // для поиска по коду устойчивее
+    const QString queryName = queryRaw;           // для поиска по названию оставим как есть
 
     try {
-        // 1️⃣ Сначала пробуем найти по коду (точное совпадение)
-        Book book = bookModel_->FindBook(query);
-        if (!book.code.isEmpty()) {
+        // 1) Поиск по коду (точное совпадение)
+        const Book bookByCode = bookModel_->FindBook(queryCode);
+        if (!bookByCode.code.isEmpty()) {
             QMessageBox::information(
                 this, "Найдено",
                 QString("Код: %1\nНазвание: %2\nАвтор: %3\nСостояние: %4")
-                    .arg(book.code,
-                         book.name,
-                         book.author,
-                         book.is_taken ? "Выдана" : "Свободна"));
+                    .arg(bookByCode.code,
+                         bookByCode.name,
+                         bookByCode.author,
+                         bookByCode.is_taken ? "Выдана" : "Свободна"));
             return;
         }
 
-        // 2️⃣ Если по коду не нашли — ищем по названию (подстрока, без учёта регистра)
+        // 2) Поиск по названию (подстрока, без учёта регистра)
         const QList<Book> &books = bookModel_->GetBooks();
         QList<Book> matches;
+        matches.reserve(4);
+
         for (const Book &b : books) {
-            if (b.name.contains(query, Qt::CaseInsensitive)) {
+            if (b.name.contains(queryName, Qt::CaseInsensitive))
                 matches.append(b);
-            }
         }
 
         if (matches.isEmpty())
             throw BookNotFoundException("Книга не найдена!");
 
-        // 3️⃣ Одна книга по названию
         if (matches.size() == 1) {
             const Book &b = matches.first();
             QMessageBox::information(
                 this, "Найдена книга",
                 QString("Код: %1\nНазвание: %2\nАвтор: %3\nСостояние: %4")
-                    .arg(b.code,
-                         b.name,
-                         b.author,
-                         b.is_taken ? "Выдана" : "Свободна"));
-        } else {
-            // 4️⃣ Несколько книг — показываем список
-            QStringList lines;
-            for (const Book &b : matches) {
-                lines << QString("%1 — %2 (%3) [%4]")
-                             .arg(b.code,
-                                  b.name,
-                                  b.author,
-                                  b.is_taken ? "выдана" : "в наличии");
-            }
-
-            QMessageBox::information(
-                this, "Найдено несколько книг",
-                "Под ваш запрос найдено несколько книг:\n\n"
-                    + lines.join("\n"));
+                    .arg(b.code, b.name, b.author, b.is_taken ? "Выдана" : "Свободна"));
+            return;
         }
+
+        // 3) Несколько книг — список
+        QStringList lines;
+        for (const Book &b : matches) {
+            lines << QString("%1 — %2 (%3) [%4]")
+                         .arg(b.code, b.name, b.author,
+                              b.is_taken ? "выдана" : "в наличии");
+        }
+
+        QMessageBox::information(
+            this, "Найдено несколько книг",
+            "Под ваш запрос найдено несколько книг:\n\n" + lines.join("\n"));
     } catch (const AppException &ex) {
         QMessageBox::warning(this, "Ошибка", ex.what());
     } catch (const std::exception &ex) {
-        QMessageBox::warning(this, "Ошибка", ex.what());
+        showExceptionBox(this, "Ошибка", ex);
     }
 }
+
 
 /**
  * @brief Слот: поиск читателя по ID или ФИО.
  */
-void MainWindow::act_search_reader() {
+void MainWindow::act_search_reader()
+{
     QDialog dialog(this);
     dialog.setWindowTitle("Поиск читателя");
 
     QFormLayout form(&dialog);
     QLineEdit searchEdit;
     QPushButton okButton("Найти"), cancelButton("Отмена");
+
     form.addRow("ID или ФИО:", &searchEdit);
     form.addRow(&okButton, &cancelButton);
 
     connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
     connect(&okButton, &QPushButton::clicked, [&]() {
         if (searchEdit.text().trimmed().isEmpty()) {
             QMessageBox::warning(&dialog, "Ошибка", "Введите ID или ФИО для поиска");
@@ -1060,39 +1129,49 @@ void MainWindow::act_search_reader() {
         dialog.accept();
     });
 
-    if (dialog.exec() == QDialog::Accepted) {
-        QString query = searchEdit.text().trimmed();
-        try {
-            auto readerOpt = readerModel_->FindReader(query);
-            if (!readerOpt) {
-                for (const auto& r : readerModel_->GetReaders()) {
-                    QString fullName = r.fullName();
-                    if (fullName.contains(query, Qt::CaseInsensitive) || r.ID.compare(query, Qt::CaseInsensitive) == 0) {
-                        readerOpt = r;
-                        break;
-                    }
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+
+    const QString query = searchEdit.text().trimmed();
+    const QString queryUp = query.toUpper();
+
+    try {
+        // 1) Пробуем найти по ID (точно)
+        auto readerOpt = readerModel_->FindReader(queryUp);
+
+        // 2) Если не нашли — ищем по ФИО (подстрока)
+        if (!readerOpt.has_value()) {
+            for (const Reader &r : readerModel_->GetReaders()) {
+                if (r.ID.compare(queryUp, Qt::CaseInsensitive) == 0 ||
+                    r.fullName().contains(query, Qt::CaseInsensitive)) {
+                    readerOpt = r;
+                    break;
                 }
             }
-            if (readerOpt) {
-                Reader r = *readerOpt;
-                QMessageBox::information(this, "Найдено", QString("ID: %1\nФИО: %2 %3 %4")
-                                                              .arg(r.ID, r.first_name, r.second_name, r.third_name));
-                ui->tabWidget->setCurrentIndex(1);
-            } else {
-                throw ReaderNotFoundException("Читатель не найден");
-            }
-        } catch (const AppException &ex) {
-            QMessageBox::warning(this, "Не найдено", ex.what());
-        } catch (const std::exception &ex) {
-            QMessageBox::warning(this, "Не найдено", ex.what());
         }
+
+        if (!readerOpt.has_value())
+            throw ReaderNotFoundException("Читатель не найден");
+
+        const Reader &r = readerOpt.value();
+        QMessageBox::information(this, "Найдено",
+                                 QString("ID: %1\nФИО: %2 %3 %4")
+                                     .arg(r.ID, r.first_name, r.second_name, r.third_name));
+
+        ui->tabWidget->setCurrentIndex(1);
+    } catch (const AppException &ex) {
+        QMessageBox::warning(this, "Не найдено", ex.what());
+    } catch (const std::exception &ex) {
+        showExceptionBox(this, "Не найдено", ex);
     }
 }
+
 
 /**
  * @brief Слот: получение информации (пока не реализовано).
  */
-void MainWindow::act_get_info() {
+void MainWindow::act_get_info()
+{
     QModelIndex index = ui->tbl_view_reader->currentIndex();
     if (!index.isValid()) {
         QMessageBox::warning(this, "Информация",
@@ -1100,20 +1179,17 @@ void MainWindow::act_get_info() {
         return;
     }
 
-    // Если таблица завернута в proxy — размэппим
-    if (auto proxy = qobject_cast<QSortFilterProxyModel*>(ui->tbl_view_reader->model())) {
-        index = proxy->mapToSource(index);
-    }
+    index = mapToSourceIndex(ui->tbl_view_reader, index);
 
     const QList<Reader> &readers = readerModel_->GetReaders();
-    int row = index.row();
+    const int row = index.row();
     if (row < 0 || row >= readers.size())
         return;
 
     const Reader &r = readers[row];
 
-    QString fio = r.fullName();
-    QString genderStr = (r.gender == Sex::Male) ? "Мужской" : "Женский";
+    const QString fio = r.fullName();
+    const QString genderStr = (r.gender == Sex::Male) ? "Мужской" : "Женский";
 
     QString msg;
     msg += "ID: " + r.ID + "\n";
@@ -1130,12 +1206,12 @@ void MainWindow::act_get_info() {
     } else {
         QStringList lines;
         for (const QString &code : r.taken_books) {
-            Book b = bookModel_->FindBook(code);
+            const Book b = bookModel_->FindBook(code);
+
             if (b.code.isEmpty()) {
                 lines << QString("%1 — (книга не найдена в каталоге)").arg(code);
             } else {
-                lines << QString("%1 — %2 (%3)")
-                             .arg(b.code, b.name, b.author);
+                lines << QString("%1 — %2 (%3)").arg(b.code, b.name, b.author);
             }
         }
         msg += lines.join("\n");
@@ -1143,6 +1219,7 @@ void MainWindow::act_get_info() {
 
     QMessageBox::information(this, "Информация о читателе", msg);
 }
+
 
 
 /**
@@ -1160,7 +1237,8 @@ void MainWindow::act_UpdateActionStates(int index) {
 /**
  * @brief Слот: возврат книги от читателя.
  */
-void MainWindow::act_return_book() {
+void MainWindow::act_return_book()
+{
     QDialog dialog(this);
     dialog.setWindowTitle("Возврат книги");
 
@@ -1174,27 +1252,39 @@ void MainWindow::act_return_book() {
     form.addRow(&okButton, &cancelButton);
 
     connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
+
     connect(&okButton, &QPushButton::clicked, [&]() {
-        if (bookCodeEdit.text().trimmed().isEmpty() || readerIdEdit.text().trimmed().isEmpty()) {
+        const QString code = bookCodeEdit.text().trimmed();
+        const QString id   = readerIdEdit.text().trimmed();
+
+        // Сохраняем твой текст сообщения "Введите код книги и ID читателя"
+        if (code.isEmpty() || id.isEmpty()) {
             QMessageBox::warning(&dialog, "Ошибка", "Введите код книги и ID читателя");
             return;
         }
-        dialog.accept();
+
+        try {
+            InputValid::checkGiveOutInput(code, id);
+            dialog.accept();
+        } catch (const AppException &ex) {
+            QMessageBox::warning(&dialog, "Ошибка", ex.what());
+        } catch (const std::exception &ex) {
+            QMessageBox::warning(&dialog, "Ошибка", ex.what());
+        }
     });
 
-    if (dialog.exec() != QDialog::Accepted) return;
+    if (dialog.exec() != QDialog::Accepted)
+        return;
 
-    QString code = bookCodeEdit.text().trimmed();
-    QString readerID = readerIdEdit.text().trimmed();
+    const QString code     = bookCodeEdit.text().trimmed().toUpper();
+    const QString readerID = readerIdEdit.text().trimmed().toUpper();
 
     try {
         auto bookIndexOpt = bookModel_->FindBookIndex(code);
         if (!bookIndexOpt.has_value())
             throw BookNotFoundException("Книга с таким кодом не найдена");
 
-        int bookIndex = bookIndexOpt.value();
-        Book book = bookModel_->GetBooks().at(bookIndex);
-
+        const Book book = bookModel_->GetBooks().at(bookIndexOpt.value());
         if (!book.is_taken)
             throw BookAlreadyAvailableException("Эта книга уже в наличии");
 
@@ -1205,7 +1295,7 @@ void MainWindow::act_return_book() {
         if (!readerModel_->RemoveLinkBook(readerID, code))
             throw InvalidInputException("Не удалось удалить книгу у читателя");
 
-        std::optional<QDate> date_null = (std::nullopt);
+        std::optional<QDate> date_null = std::nullopt;
         if (!bookModel_->SetBookTaken(code, false, date_null))
             throw InvalidInputException("Не удалось обновить статус книги");
 
@@ -1216,6 +1306,7 @@ void MainWindow::act_return_book() {
         QMessageBox::warning(this, "Ошибка", ex.what());
     }
 }
+
 
 /**
  * @brief Слот: кнопка "Получить книгу" вызывает возврат книги.

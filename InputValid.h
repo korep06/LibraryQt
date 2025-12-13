@@ -25,6 +25,7 @@ private:
     static bool hasAdjacentInvalidHyphensOrApostrophes(const QString &s);
     static int firstAlnumIndex(const QString &s);
     static int lastAlnumIndex(const QString &s);
+    static void validatePersonNameField(const QString &value, const QString &fieldName);
 };
 
 #endif // INPUTVALID_H

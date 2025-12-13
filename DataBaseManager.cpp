@@ -4,12 +4,19 @@
 #include <QSqlError>
 #include <QDebug>
 
-DatabaseManager::DatabaseManager() {}
+namespace {
+// Чтобы Qt не ругался на "duplicate connection name" и не плодил дефолтные подключения.
+const char kConnName[] = "LibraryQtConnection";
+
+// Сейчас используем SQLite. Для ODBC можно заменить на "QODBC" (см. TODO в .h).
+const char kDriverName[] = "QSQLITE";
+} // namespace
+
+DatabaseManager::DatabaseManager() = default;
 
 DatabaseManager::~DatabaseManager()
 {
-    if (db_.isOpen())
-        db_.close();
+    closeConnection();
 }
 
 DatabaseManager& DatabaseManager::instance()
@@ -20,22 +27,44 @@ DatabaseManager& DatabaseManager::instance()
 
 bool DatabaseManager::open(const QString& fileName)
 {
-    if (db_.isOpen())
+    // Уже открыто — просто ок.
+    if (db_.isValid() && db_.isOpen())
         return true;
 
-    db_ = QSqlDatabase::addDatabase("QSQLITE");
+    // Переиспользуем одно и то же подключение по имени.
+    if (QSqlDatabase::contains(kConnName))
+        db_ = QSqlDatabase::database(kConnName);
+    else
+        db_ = QSqlDatabase::addDatabase(kDriverName, kConnName);
+
     db_.setDatabaseName(fileName);
 
     if (!db_.open()) {
         qDebug() << "DB open error:" << db_.lastError().text();
         return false;
     }
+
     return initSchema();
 }
 
 QSqlDatabase DatabaseManager::database() const
 {
+    // QSqlDatabase — это "handle", копирование дешёвое.
     return db_;
+}
+
+void DatabaseManager::closeConnection()
+{
+    if (!db_.isValid())
+        return;
+
+    const QString name = db_.connectionName();
+
+    if (db_.isOpen())
+        db_.close();
+
+    db_ = QSqlDatabase();
+    QSqlDatabase::removeDatabase(name);
 }
 
 bool DatabaseManager::initSchema()

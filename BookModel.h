@@ -11,9 +11,6 @@
 
 #pragma once
 
-#include <string>
-#include <iostream>
-#include <deque>
 #include <QList>
 #include <QString>
 #include <QAbstractItemModel>

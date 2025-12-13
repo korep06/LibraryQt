@@ -4,45 +4,102 @@
 #include <QRegularExpression>
 
 // ----------------------------------
+// Регулярки (чтобы не создавать их на каждый вызов)
+// ЛОГИКА НЕ МЕНЯЕТСЯ — только вынесено в static const
+// ----------------------------------
+namespace {
+
+const QRegularExpression kLongRepeatedPunctRe(QStringLiteral("([\\p{P}\\p{S}])\\1{2,}"));
+const QRegularExpression kAdjacentInvalidHyphensOrAposRe(QStringLiteral("(-{2,}|'{2,}|`{2,})"));
+
+const QRegularExpression kStartRepeatPunctRe(QStringLiteral("^[\\p{P}\\p{S}]{1,}"));
+const QRegularExpression kAllowedTitleRe(QStringLiteral(
+    "^[\\p{L}\\p{N}\\s\\.,:;!\\?()\\[\\]{}'\"«»\\-–—/\\\\+&%#@]+$"));
+
+const QRegularExpression kAuthorRe(QStringLiteral("^[\\p{L}\\-\\'\\.\\s]+$"));
+const QRegularExpression kPersonNameRe(QStringLiteral("^[\\p{L}\\-\\'\\.\\s]+$"));
+
+const QRegularExpression kBookCodeRe(QStringLiteral("^B[0-9]{3,5}$"),
+                                     QRegularExpression::CaseInsensitiveOption);
+const QRegularExpression kReaderIdRe(QStringLiteral("^R[0-9]{4}$"),
+                                     QRegularExpression::CaseInsensitiveOption);
+
+const QRegularExpression kSearchRe(QStringLiteral(
+    "^[\\p{L}\\p{N}\\s\\.,:;!\\?()\\[\\]{}'\"«»\\-–—/\\\\+&%#@]+$"));
+
+} // namespace
+
+// ----------------------------------
 // Вспомогательные функции
 // ----------------------------------
 
-QString InputValid::normalizeSpaces(const QString &s) {
+QString InputValid::normalizeSpaces(const QString &s)
+{
     return s.simplified();
 }
 
-int InputValid::countLetters(const QString &s) {
+int InputValid::countLetters(const QString &s)
+{
     int cnt = 0;
-    for (QChar c : s) if (c.isLetter()) ++cnt;
+    for (const QChar c : s)
+        if (c.isLetter()) ++cnt;
     return cnt;
 }
 
-int InputValid::countDigits(const QString &s) {
+int InputValid::countDigits(const QString &s)
+{
     int cnt = 0;
-    for (QChar c : s) if (c.isDigit()) ++cnt;
+    for (const QChar c : s)
+        if (c.isDigit()) ++cnt;
     return cnt;
 }
 
-bool InputValid::hasLongRepeatedPunct(const QString &s) {
-    QRegularExpression re("([\\p{P}\\p{S}])\\1{2,}");
-    return re.match(s).hasMatch();
+bool InputValid::hasLongRepeatedPunct(const QString &s)
+{
+    return kLongRepeatedPunctRe.match(s).hasMatch();
 }
 
-bool InputValid::hasAdjacentInvalidHyphensOrApostrophes(const QString &s) {
-    QRegularExpression re("(-{2,}|'{2,}|`{2,})");
-    return re.match(s).hasMatch();
+bool InputValid::hasAdjacentInvalidHyphensOrApostrophes(const QString &s)
+{
+    return kAdjacentInvalidHyphensOrAposRe.match(s).hasMatch();
 }
 
-int InputValid::firstAlnumIndex(const QString &s) {
+int InputValid::firstAlnumIndex(const QString &s)
+{
     for (int i = 0; i < s.size(); ++i)
-        if (s[i].isLetterOrNumber()) return i;
+        if (s[i].isLetterOrNumber())
+            return i;
     return -1;
 }
 
-int InputValid::lastAlnumIndex(const QString &s) {
+int InputValid::lastAlnumIndex(const QString &s)
+{
     for (int i = s.size() - 1; i >= 0; --i)
-        if (s[i].isLetterOrNumber()) return i;
+        if (s[i].isLetterOrNumber())
+            return i;
     return -1;
+}
+
+void InputValid::validatePersonNameField(const QString &value, const QString &fieldName)
+{
+    // Сообщения и логика сохранены (как было в лямбде)
+    if (value.isEmpty())
+        throw InvalidReaderException(fieldName + " не может быть пустым.");
+
+    if (!kPersonNameRe.match(value).hasMatch())
+        throw InvalidReaderException(fieldName + " содержит недопустимые символы.");
+
+    if (hasAdjacentInvalidHyphensOrApostrophes(value))
+        throw InvalidReaderException(fieldName + " содержит повторяющиеся символы.");
+
+    const QChar first = value.front();
+    const QChar last  = value.back();
+    if (first == '-' || first == '\'' || first == '.' ||
+        last  == '-' || last  == '\'' || last  == '.')
+        throw InvalidReaderException(fieldName + " начинается/заканчивается пунктуацией.");
+
+    if (countLetters(value) < 2)
+        throw InvalidReaderException(fieldName + " должно содержать минимум 2 буквы.");
 }
 
 // ----------------------------------
@@ -51,24 +108,21 @@ int InputValid::lastAlnumIndex(const QString &s) {
 
 void InputValid::checkAddBook(const QString &name, const QString &author)
 {
-    QString nameNorm = normalizeSpaces(name);
-    QString authorNorm = normalizeSpaces(author);
+    const QString nameNorm = normalizeSpaces(name);
+    const QString authorNorm = normalizeSpaces(author);
 
     if (nameNorm.isEmpty())
         throw EmptyBookNameException("Введите название книги!");
 
-    QRegularExpression startRepeat("^[\\p{P}\\p{S}]{1,}");
-    if (startRepeat.match(nameNorm).hasMatch()) {
+    if (kStartRepeatPunctRe.match(nameNorm).hasMatch()) {
         throw InvalidBookNameException("Название не может начинаться несколькими знаками пунктуации.");
     }
 
-    QRegularExpression allowedTitleRe(
-        "^[\\p{L}\\p{N}\\s\\.,:;!\\?()\\[\\]{}'\"«»\\-–—/\\\\+&%#@]+$");
-    if (!allowedTitleRe.match(nameNorm).hasMatch())
+    if (!kAllowedTitleRe.match(nameNorm).hasMatch())
         throw InvalidBookNameException("Название содержит недопустимые символы.");
 
-    int letters = countLetters(nameNorm);
-    int digits = countDigits(nameNorm);
+    const int letters = countLetters(nameNorm);
+    const int digits = countDigits(nameNorm);
 
     if (letters + digits < 1)
         throw InvalidBookNameException("Название должно содержать буквы или цифры.");
@@ -79,8 +133,8 @@ void InputValid::checkAddBook(const QString &name, const QString &author)
     if (hasAdjacentInvalidHyphensOrApostrophes(nameNorm))
         throw InvalidBookNameException("Повторяющиеся дефисы/апострофы недопустимы.");
 
-    int firstAlnum = firstAlnumIndex(nameNorm);
-    int lastAlnum = lastAlnumIndex(nameNorm);
+    const int firstAlnum = firstAlnumIndex(nameNorm);
+    const int lastAlnum = lastAlnumIndex(nameNorm);
 
     if (firstAlnum < 0 || lastAlnum < 0)
         throw InvalidBookNameException("Нет буквенно-цифровых символов.");
@@ -88,7 +142,8 @@ void InputValid::checkAddBook(const QString &name, const QString &author)
     if (firstAlnum > 3)
         throw InvalidBookNameException("Название начинается с большого количества пунктуации.");
 
-    if ((int)nameNorm.size() - 1 - lastAlnum > 3)
+    const int nameLen = nameNorm.size();
+    if (nameLen - 1 - lastAlnum > 3)
         throw InvalidBookNameException("Название заканчивается большим количеством пунктуации.");
 
     if (letters > 0 && letters < 2 && digits == 0) {
@@ -100,15 +155,14 @@ void InputValid::checkAddBook(const QString &name, const QString &author)
     if (authorNorm.isEmpty())
         throw EmptyAuthorException("Введите автора!");
 
-    QRegularExpression authorRe("^[\\p{L}\\-\\'\\.\\s]+$");
-    if (!authorRe.match(authorNorm).hasMatch())
+    if (!kAuthorRe.match(authorNorm).hasMatch())
         throw InvalidAuthorException("Недопустимые символы в имени автора.");
 
     if (hasAdjacentInvalidHyphensOrApostrophes(authorNorm))
         throw InvalidAuthorException("Повторяющиеся дефисы/апострофы в имени автора.");
 
-    QChar firstA = authorNorm.front();
-    QChar lastA  = authorNorm.back();
+    const QChar firstA = authorNorm.front();
+    const QChar lastA  = authorNorm.back();
 
     if (firstA == '-' || firstA == '\'' || firstA == '.' ||
         lastA  == '-' || lastA  == '\'' || lastA  == '.')
@@ -127,73 +181,48 @@ void InputValid::checkAddReader(const QString &surname,
                                 const QString &name,
                                 const std::optional<QString> &thname)
 {
-    auto validatePersonName = [&](const QString &value, const QString &fieldName) {
-        if (value.isEmpty())
-            throw InvalidReaderException(fieldName + " не может быть пустым.");
-
-        QRegularExpression re("^[\\p{L}\\-\\'\\.\\s]+$");
-        if (!re.match(value).hasMatch())
-            throw InvalidReaderException(fieldName + " содержит недопустимые символы.");
-
-        if (hasAdjacentInvalidHyphensOrApostrophes(value))
-            throw InvalidReaderException(fieldName + " содержит повторяющиеся символы.");
-
-        QChar first = value.front();
-        QChar last  = value.back();
-        if (first == '-' || first == '\'' || first == '.' ||
-            last  == '-' || last  == '\'' || last  == '.')
-            throw InvalidReaderException(fieldName + " начинается/заканчивается пунктуацией.");
-
-        if (countLetters(value) < 2)
-            throw InvalidReaderException(fieldName + " должно содержать минимум 2 буквы.");
-    };
-
-    QString sTrim = normalizeSpaces(surname);
-    QString nTrim = normalizeSpaces(name);
+    const QString sTrim = normalizeSpaces(surname);
+    const QString nTrim = normalizeSpaces(name);
 
     if (sTrim.isEmpty())
         throw EmptyReaderSurnameException("Введите фамилию!");
-    validatePersonName(sTrim, "Фамилия");
+    validatePersonNameField(sTrim, "Фамилия");
 
     if (nTrim.isEmpty())
         throw EmptyReaderNameException("Введите имя!");
-    validatePersonName(nTrim, "Имя");
+    validatePersonNameField(nTrim, "Имя");
 
     if (thname.has_value()) {
-        QString t = normalizeSpaces(thname.value());
+        const QString t = normalizeSpaces(thname.value());
         if (!t.isEmpty()) {
             if (t.size() <= 2 && !t.contains('.'))
                 throw InvalidReaderException("Отчество слишком короткое.");
-            validatePersonName(t, "Отчество");
+            validatePersonNameField(t, "Отчество");
         }
     }
 }
 
 void InputValid::checkGiveOutInput(const QString &code, const QString &readerID)
 {
-    QString c = code.trimmed().toUpper();
-    QString r = readerID.trimmed().toUpper();
+    const QString c = code.trimmed().toUpper();
+    const QString r = readerID.trimmed().toUpper();
 
     if (c.isEmpty() || r.isEmpty())
         throw InvalidInputException("Введите код книги и ID читателя!");
 
-    QRegularExpression codeRe("^B[0-9]{3,5}$", QRegularExpression::CaseInsensitiveOption);
-    if (!codeRe.match(c).hasMatch())
+    if (!kBookCodeRe.match(c).hasMatch())
         throw InvalidInputException("Формат кода книги: B + 3–5 цифр.");
 
-    QRegularExpression idRe("^R[0-9]{4}$", QRegularExpression::CaseInsensitiveOption);
-    if (!idRe.match(r).hasMatch())
+    if (!kReaderIdRe.match(r).hasMatch())
         throw InvalidInputException("Формат ID читателя: R + 4 цифры.");
 }
 
 void InputValid::checkBookSearch(const QString &query)
 {
-    QString q = query.trimmed();
+    const QString q = query.trimmed();
     if (q.isEmpty())
         throw InvalidInputException("Введите название или код книги!");
 
-    QRegularExpression searchRe(
-        "^[\\p{L}\\p{N}\\s\\.,:;!\\?()\\[\\]{}'\"«»\\-–—/\\\\+&%#@]+$");
-    if (!searchRe.match(q).hasMatch())
+    if (!kSearchRe.match(q).hasMatch())
         throw InvalidInputException("Недопустимые символы в запросе.");
 }

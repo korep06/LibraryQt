@@ -33,7 +33,7 @@ ReaderModel::ReaderModel( QObject *parent)
     : QAbstractTableModel(parent) {
 }
 
-void ReaderModel::ReaderModel::UpdateReaderAt(int index, const Reader &reader) {
+void ReaderModel::UpdateReaderAt(int index, const Reader &reader) {
     if (index < 0 || index >= readers_.size()) {
         return;
     }
@@ -146,22 +146,18 @@ bool ReaderModel::RemoveReader(const QString &id)
 
 bool ReaderModel::AddLinkBook(const QString &readerID, const QString &bookCode)
 {
-    if (!FindReaderIndex(readerID).has_value()) {
+    auto optIdx = FindReaderIndex(readerID);
+    if (!optIdx.has_value())
         return false;
-    }
-    int idx = FindReaderIndex(readerID).value();
 
-    // Если книга уже есть в списке — не дублируем
+    const int idx = optIdx.value();
+
     if (readers_[idx].taken_books.contains(bookCode))
         return false;
 
     readers_[idx].taken_books.append(bookCode);
 
-    // уведомляем view об изменении строки читателя
-    QModelIndex topLeft = index(idx, 0);
-    QModelIndex bottomRight = index(idx, columnCount() - 1);
-    emit dataChanged(topLeft, bottomRight);
-
+    emit dataChanged(index(idx, 0), index(idx, columnCount() - 1));
     InsertOrUpdateInDatabase(readers_[idx]);
     return true;
 }
@@ -219,7 +215,7 @@ std::optional<Reader> ReaderModel::FindReader(const QString &id)
  * @brief Возвращает копию списка читателей
  * @return Копия списка всех читателей
  */
-const QList<Reader> ReaderModel::GetReaders() const
+const QList<Reader>& ReaderModel::GetReaders() const
 {
     return readers_;
 }

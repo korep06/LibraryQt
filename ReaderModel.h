@@ -151,7 +151,7 @@ public:
      * @brief Возвращает копию списка читателей
      * @return Копия списка всех читателей
      */
-    const QList<Reader> GetReaders() const;
+    const QList<Reader>& GetReaders() const;
 
     /**
      * @brief Загружает список читателей из файла

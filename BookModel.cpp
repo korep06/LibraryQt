@@ -180,19 +180,16 @@ std::optional<int> BookModel::FindBookIndex(const QString &code) const
 
 bool BookModel::SetBookTaken(const QString &code, bool isTaken, std::optional<QDate> &date)
 {
-    if( !FindBookIndex(code).has_value() )  {
+    auto optIdx = FindBookIndex(code);
+    if (!optIdx.has_value())
         return false;
-    }
-    int idx = FindBookIndex(code).value();
+
+    const int idx = optIdx.value();
 
     books_[idx].is_taken = isTaken;
-    if (isTaken) books_[idx].date_taken = std::optional<QDate>(date);
-    else books_[idx].date_taken = std::nullopt;
+    books_[idx].date_taken = isTaken ? date : std::nullopt;
 
-    // уведомляем view об изменении строки
-    QModelIndex topLeft = index(idx, 0);
-    QModelIndex bottomRight = index(idx, columnCount() - 1);
-    emit dataChanged(topLeft, bottomRight);
+    emit dataChanged(index(idx, 0), index(idx, columnCount() - 1));
 
     InsertOrUpdateInDatabase(books_[idx]);
     return true;
