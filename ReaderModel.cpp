@@ -345,7 +345,7 @@ bool ReaderModel::LoadFromXml(const QString& filePath)
         auto token = xml.readNext();
 
         // Ищем <reader>
-        if (token == QXmlStreamReader::StartElement && xml.name() == "reader") {
+        if (token == QXmlStreamReader::StartElement && xml.name() == u"reader") {
             Reader reader;
 
             // Разбираем содержимое <reader> ... </reader>
@@ -354,7 +354,7 @@ bool ReaderModel::LoadFromXml(const QString& filePath)
 
                 // Закрывающий тег </reader> — выходим из внутреннего цикла
                 if (xml.tokenType() == QXmlStreamReader::EndElement
-                    && xml.name() == "reader")
+                    && xml.name() == u"reader")
                 {
                     break;
                 }
@@ -365,18 +365,18 @@ bool ReaderModel::LoadFromXml(const QString& filePath)
                 const auto tag = xml.name();
 
                 // ОСОБЫЙ СЛУЧАЙ: <taken_books> с вложенными <book>
-                if (tag == "taken_books") {
+                if (tag == u"taken_books") {
                     while (!xml.atEnd()) {
                         xml.readNext();
 
                         if (xml.tokenType() == QXmlStreamReader::EndElement
-                            && xml.name() == "taken_books")
+                            && xml.name() == u"taken_books")
                         {
                             break;
                         }
 
                         if (xml.tokenType() == QXmlStreamReader::StartElement
-                            && xml.name() == "book")
+                            && xml.name() == u"book")
                         {
                             QString code = xml.readElementText().trimmed();
                             if (!code.isEmpty())
@@ -387,15 +387,15 @@ bool ReaderModel::LoadFromXml(const QString& filePath)
                     // Обычные простые поля: только текст внутри тега
                     const QString text = xml.readElementText();
 
-                    if (tag == "ID")              reader.ID = text;
-                    else if (tag == "first_name")  reader.first_name = text;
-                    else if (tag == "second_name") reader.second_name = text;
-                    else if (tag == "third_name")  reader.third_name = text;
-                    else if (tag == "gender") {
+                    if (tag == u"ID")              reader.ID = text;
+                    else if (tag == u"first_name")  reader.first_name = text;
+                    else if (tag == u"second_name") reader.second_name = text;
+                    else if (tag == u"third_name")  reader.third_name = text;
+                    else if (tag == u"gender") {
                         reader.gender =
                             (text.trimmed() == "1" ? Sex::Male : Sex::Female);
                     }
-                    else if (tag == "reg_date") {
+                    else if (tag == u"reg_date") {
                         QString t = text.trimmed();
                         if (t.isEmpty())
                             reader.reg_date = QDate();

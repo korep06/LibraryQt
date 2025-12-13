@@ -8,6 +8,7 @@
 #include "Exception.h"
 #include "spdlog/spdlog.h"
 #include "DatabaseManager.h"
+#include "InputValid.h"
 
 #include <QMessageBox>
 #include <QDialog>
@@ -559,91 +560,8 @@ void MainWindow::act_export_books_html()
 }
 
 
-static int countLetters(const QString &s) {
-    int cnt = 0;
-    for (QChar ch : s) {
-        if (ch.isLetter())
-            ++cnt;
-    }
-    return cnt;
-}
-
-/**
- * @brief Проверка корректности данных при добавлении книги.
- * @param name Название книги
- * @param author Автор книги
- * @throws EmptyBookNameException если название пустое
- * @throws EmptyAuthorException если автор пустой
- * @throws InvalidBookNameException если название слишком короткое
- * @throws InvalidAuthorException если имя автора некорректно
- */
-void MainWindow::checkAddBook(const QString &name, const QString &author) {
-    QString nameTrim = name.trimmed();
-    QString authorTrim = author.trimmed();
-
-    // Разрешаем буквы, цифры, пробел, запятую, точку и дефис
-    QRegularExpression allowedRe("^[A-Za-zА-Яа-яЁё0-9 ,\\.\\-]+$");
-
-    if (nameTrim.isEmpty())
-        throw EmptyBookNameException("Введите название книги!");
-    if (!allowedRe.match(nameTrim).hasMatch())
-        throw InvalidBookNameException("Название может содержать только буквы, цифры, пробелы и знаки , . -");
-    // Минимум 3 буквы, чтобы не было ",,," или "---"
-    if (countLetters(nameTrim) < 3)
-        throw InvalidBookNameException("В названии должно быть не меньше 3 букв!");
-    if (authorTrim.isEmpty())
-        throw EmptyAuthorException("Введите автора книги!");
-    if (!allowedRe.match(authorTrim).hasMatch())
-        throw InvalidAuthorException("Имя автора может содержать только буквы, цифры, пробелы и знаки , . -");
-    if (countLetters(authorTrim) < 3)
-        throw InvalidAuthorException("В имени автора должно быть не меньше 3 букв!");
-}
-
-/**
- * @brief Проверка корректности данных при редактировании книги.
- * @param name Название книги
- * @param author Автор книги
- */
-void MainWindow::checkEditBook(const QString &name, const QString &author) {
-    checkAddBook(name, author);
-}
-
-/**
- * @brief Проверка корректности данных при добавлении читателя.
- * @param surname Фамилия читателя
- * @param name Имя читателя
- * @throws EmptyReaderSurnameException если фамилия пустая или некорректная
- * @throws EmptyReaderNameException если имя пустое или некорректное
- */
-void MainWindow::checkAddReader(const QString &surname, const QString &name , const std::optional<QString> & thname)
-{
-    QRegularExpression validNameRegex("^[A-Za-zА-Яа-яЁё\\- ]+$");
-
-    QString sTrim = surname.trimmed();
-    QString nTrim = name.trimmed();
-    if (thname.has_value() && thname.value().trimmed().length() > 0) {
-       QString thTrim = thname.value().trimmed();
-        if (!validNameRegex.match(thTrim).hasMatch())
-            throw EmptyReaderSurnameException("Отчество может содержать только буквы, пробел или дефис!");
-        if (countLetters(thTrim) < 3)
-            throw EmptyReaderSurnameException("Отчество должно содержать минимум 3 буквы!");
-    }
 
 
-    if (sTrim.isEmpty())
-        throw EmptyReaderSurnameException("Введите фамилию читателя!");
-    if (!validNameRegex.match(sTrim).hasMatch())
-        throw EmptyReaderSurnameException("Фамилия может содержать только буквы, пробел или дефис!");
-    if (countLetters(sTrim) < 3)
-        throw EmptyReaderSurnameException("Фамилия должна содержать минимум 3 буквы!");
-
-    if (nTrim.isEmpty())
-        throw EmptyReaderNameException("Введите имя читателя!");
-    if (!validNameRegex.match(nTrim).hasMatch())
-        throw EmptyReaderNameException("Имя может содержать только буквы, пробел или дефис!");
-    if (countLetters(nTrim) < 3)
-        throw EmptyReaderNameException("Имя должно содержать минимум 3 буквы!");
-}
 
 /**
  * @brief Слот: добавление книги через диалог.
@@ -664,7 +582,7 @@ void MainWindow::act_add_book()
 
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            checkAddBook(nameEdit.text(), authorEdit.text());
+            InputValid::checkAddBook(nameEdit.text(), authorEdit.text());
             dialog.accept();
 
         } catch (const AppException &ex) {
@@ -721,7 +639,7 @@ void MainWindow::act_add_reader()
 
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            checkAddReader(firstEdit.text(), secondEdit.text() , thirdEdit.text() );
+            InputValid::checkAddReader(firstEdit.text(), secondEdit.text() , thirdEdit.text() );
             dialog.accept();
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
@@ -785,7 +703,7 @@ void MainWindow::act_edit_book()
     connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            checkEditBook(nameEdit.text(), authorEdit.text());
+            InputValid::checkEditBook(nameEdit.text(), authorEdit.text());
 
             QString newCode = codeEdit.text().trimmed();
             if (newCode.isEmpty())
@@ -876,7 +794,7 @@ void MainWindow::act_edit_reader()
     connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            checkAddReader(firstEdit.text(), secondEdit.text() , thirdEdit.text());
+            InputValid::checkAddReader(firstEdit.text(), secondEdit.text() , thirdEdit.text());
             dialog.accept();
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
@@ -898,28 +816,6 @@ void MainWindow::act_edit_reader()
 
 
 /**
- * @brief Проверка корректности данных при выдаче книги.
- * @param code Код книги
- * @param readerID ID читателя
- * @throws InvalidInputException если поля пустые или слишком короткие
- */
-void MainWindow::checkGiveOutInput(const QString &code, const QString &readerID) {
-    QString c = code.trimmed();
-    QString r = readerID.trimmed();
-
-    if (c.isEmpty() || r.isEmpty())
-        throw InvalidInputException("Введите код книги и ID читателя!");
-
-    QRegularExpression codeRe("^B[0-9]{3,5}$");
-    if (!codeRe.match(c).hasMatch())
-        throw InvalidInputException("Неверный формат кода книги (ожидается BXXX)");
-
-    QRegularExpression idRe("^R[0-9]{4}$");
-    if (!idRe.match(r).hasMatch())
-        throw InvalidInputException("Неверный формат ID читателя (ожидается RXXXX)");
-}
-
-/**
  * @brief Слот: выдача книги читателю.
  */
 void MainWindow::act_giveout_book() {
@@ -938,7 +834,7 @@ void MainWindow::act_giveout_book() {
     connect(&cancelButton, &QPushButton::clicked, &dialog, &QDialog::reject);
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            checkGiveOutInput(bookCodeEdit.text(), readerIdEdit.text());
+            InputValid::checkGiveOutInput(bookCodeEdit.text(), readerIdEdit.text());
             dialog.accept();
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
@@ -1053,16 +949,6 @@ void MainWindow::act_delete_reader() {
 }
 
 /**
- * @brief Проверка ввода при поиске книги.
- * @param query Строка запроса
- * @throws InvalidInputException если строка пустая
- */
-void MainWindow::checkBookSearch(const QString &query) {
-    if (query.trimmed().isEmpty())
-        throw InvalidInputException("Введите название или код книги!");
-}
-
-/**
  * @brief Слот: поиск книги по коду или названию.
  */
 void MainWindow::act_search_book() {
@@ -1079,7 +965,7 @@ void MainWindow::act_search_book() {
             &dialog, &QDialog::reject);
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            checkBookSearch(searchEdit.text());
+            InputValid::checkBookSearch(searchEdit.text());
             dialog.accept();
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка ввода", ex.what());

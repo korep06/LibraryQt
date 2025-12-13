@@ -39,6 +39,9 @@ set(PROJECT_SOURCES
 
     DataBaseManager.cpp
     DataBaseManager.h
+
+    InputValid.cpp
+    InputValid.h
 )
 
 #Для логгирования
@@ -51,6 +54,9 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         DataBaseManager.h
         DataBaseManager.cpp
+        InputValid.h
+        InputValid.cpp
+
     )
 else()
     if(ANDROID)

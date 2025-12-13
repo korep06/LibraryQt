@@ -304,13 +304,13 @@ bool BookModel::LoadFromXml(const QString& filePath)
 
     while (!xml.atEnd() && !xml.hasError()) {
         auto token = xml.readNext();
-        if (token == QXmlStreamReader::StartElement && xml.name() == "book") {
+        if (token == QXmlStreamReader::StartElement && xml.name() == u"book") {
             Book book;
 
             while (!xml.atEnd()) {
                 xml.readNext();
 
-                if (xml.tokenType() == QXmlStreamReader::EndElement && xml.name() == "book")
+                if (xml.tokenType() == QXmlStreamReader::EndElement && xml.name() == u"book")
                     break;
 
                 if (xml.tokenType() != QXmlStreamReader::StartElement)
@@ -319,13 +319,13 @@ bool BookModel::LoadFromXml(const QString& filePath)
                 const auto tag = xml.name();
                 const QString text = xml.readElementText();
 
-                if (tag == "code")        book.code = text;
-                else if (tag == "name")   book.name = text;
-                else if (tag == "author") book.author = text;
-                else if (tag == "is_taken") {
+                if (tag == u"code")        book.code = text;
+                else if (tag == u"name")   book.name = text;
+                else if (tag == u"author") book.author = text;
+                else if (tag == u"is_taken") {
                     const QString v = text.trimmed().toLower();
                     book.is_taken = (v == "1" || v == "true");
-                } else if (tag == "date_taken") {
+                } else if (tag == u"date_taken") {
                     QString v = text.trimmed();
                     book.date_taken = v.isEmpty()
                                           ? std::nullopt

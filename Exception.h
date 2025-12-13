@@ -47,6 +47,12 @@ public:
         : AppException(msg) {}
 };
 
+class InvalidReaderException : public AppException {
+public:
+    explicit InvalidReaderException(const QString &msg)
+        : AppException(msg) {}
+};
+
 class EmptyReaderSurnameException : public AppException {
 public:
     explicit EmptyReaderSurnameException(const QString &msg)
