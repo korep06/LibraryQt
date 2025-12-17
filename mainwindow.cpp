@@ -275,6 +275,10 @@ QString buildReportHtmlFromData(const QList<Book> &books,
  * - добавление/редактирование/удаление
  * - поиск и фильтрация
  */
+/**
+ * @brief Конструктор главного окна.
+ * @param parent Родительский виджет.
+ */
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -384,13 +388,37 @@ MainWindow::~MainWindow()
  * @brief Слоты для кнопок (делегируют вызов соответствующих действий)
  */
 void MainWindow::on_pb_addBook_clicked() { act_add_book(); }
+/**
+ * @brief Обработчик кнопки «Редактировать книгу».
+ */
 void MainWindow::on_pb_editBook_clicked() { act_edit_book(); }
+/**
+ * @brief Обработчик кнопки «Удалить книгу».
+ */
 void MainWindow::on_pb_deleteBook_clicked() { act_delete_book(); }
+/**
+ * @brief Обработчик кнопки «Поиск книги».
+ */
 void MainWindow::on_pb_searchBook_clicked() { act_search_book(); }
+/**
+ * @brief Обработчик кнопки «Добавить читателя».
+ */
 void MainWindow::on_pb_addReader_clicked() { act_add_reader(); }
+/**
+ * @brief Обработчик кнопки «Редактировать читателя».
+ */
 void MainWindow::on_pb_editReader_clicked() { act_edit_reader(); }
+/**
+ * @brief Обработчик кнопки «Удалить читателя».
+ */
 void MainWindow::on_pb_deleteReader_clicked() { act_delete_reader(); }
+/**
+ * @brief Обработчик кнопки «Поиск читателя».
+ */
 void MainWindow::on_pb_searchReader_clicked() { act_search_reader(); }
+/**
+ * @brief Обработчик кнопки «Выдать книгу».
+ */
 void MainWindow::on_pb_giveBook_clicked() { act_giveout_book(); }
 
 /**
@@ -418,6 +446,9 @@ void MainWindow::act_close_app()
     close();
 }
 
+/**
+ * @brief Сформировать HTML-отчёт по данным книг и читателей.
+ */
 QString MainWindow::buildFullReportHtml() const
 {
     return buildReportHtmlFromData(bookModel_->GetBooks(),
@@ -425,6 +456,9 @@ QString MainWindow::buildFullReportHtml() const
 }
 
 
+/**
+ * @brief Экспорт отчёта в PDF.
+ */
 void MainWindow::act_export_books_pdf()
 {
     QString fileName = QFileDialog::getSaveFileName(
@@ -451,6 +485,9 @@ void MainWindow::act_export_books_pdf()
                              "PDF-отчёт успешно сохранён ");
 }
 
+/**
+ * @brief Экспорт отчёта в HTML (возможна генерация в потоках).
+ */
 void MainWindow::act_export_books_html()
 {
     spdlog::info("Старт многопоточного экспорта HTML-отчёта");
@@ -1315,8 +1352,10 @@ void MainWindow::on_pb_getBook_clicked() {
     act_return_book();
 }
 
+/**
+ * @brief Обработчик кнопки «Информация о читателе».
+ */
 void MainWindow::on_pb_get_info_reader_clicked()
 {
     act_get_info();
 }
-

@@ -2,14 +2,21 @@
  * @file ReaderModel.cpp
  * @author Кирилл К
  * @brief Реализация методов модели читателей
- * @version 1.0
- * @date 2024-12-19
+ * @version 1.1
+ * @date 2025-12-11
+ *
+ * Реализация Qt-модели ReaderModel:
+ * - хранение читателей в памяти (QList<Reader>);
+ * - отображение в таблице (QAbstractTableModel);
+ * - CRUD операции;
+ * - привязка/отвязка книг к читателю;
+ * - загрузка/сохранение в JSON/XML;
+ * - синхронизация с SQLite через DatabaseManager.
  */
 
 #include "ReaderModel.h"
 #include "Exception.h"
 #include "DatabaseManager.h"
-
 
 #include <QFile>
 #include <QJsonDocument>
@@ -23,16 +30,21 @@
 #include <QSqlQuery>
 #include <QSqlError>
 
-
 /**
- * @brief Конструктор модели читателей
- * @param readers Ссылка на список читателей для инициализации модели
- * @param parent Родительский объект в иерархии Qt
+ * @brief Конструктор модели читателей.
+ * @param parent Родительский объект Qt.
  */
-ReaderModel::ReaderModel( QObject *parent)
+ReaderModel::ReaderModel(QObject *parent)
     : QAbstractTableModel(parent) {
 }
 
+/**
+ * @brief Обновляет данные читателя по индексу и сохраняет изменения в БД.
+ * @param index Индекс читателя в списке readers_.
+ * @param reader Новые данные читателя.
+ *
+ * @note После замены записи уведомляет View через dataChanged().
+ */
 void ReaderModel::UpdateReaderAt(int index, const Reader &reader) {
     if (index < 0 || index >= readers_.size()) {
         return;
@@ -108,8 +120,10 @@ QVariant ReaderModel::headerData(int section, Qt::Orientation orientation, int r
 }
 
 /**
- * @brief Добавляет нового читателя в модель
- * @param reader Читатель для добавления
+ * @brief Добавляет нового читателя в модель.
+ * @param reader Читатель для добавления.
+ *
+ * Добавляет запись в память + синхронизирует с БД.
  */
 void ReaderModel::AddReader(const Reader &reader)
 {
@@ -121,8 +135,11 @@ void ReaderModel::AddReader(const Reader &reader)
 }
 
 /**
- * @brief Удаляет читателя из модели по идентификатору
- * @param id Уникальный идентификатор читателя для удаления
+ * @brief Удаляет читателя из модели по идентификатору.
+ * @param id Уникальный идентификатор читателя для удаления.
+ * @return true если читатель найден и удалён.
+ *
+ * @throw ReaderDeleteForbiddenException если у читателя есть невозвращённые книги.
  */
 bool ReaderModel::RemoveReader(const QString &id)
 {
@@ -144,6 +161,12 @@ bool ReaderModel::RemoveReader(const QString &id)
     return false;
 }
 
+/**
+ * @brief Добавляет связь "читатель → книга" (закрепляет книгу за читателем).
+ * @param readerID ID читателя.
+ * @param bookCode Код книги.
+ * @return true если связь добавлена, false если читатель не найден или книга уже закреплена.
+ */
 bool ReaderModel::AddLinkBook(const QString &readerID, const QString &bookCode)
 {
     auto optIdx = FindReaderIndex(readerID);
@@ -162,6 +185,12 @@ bool ReaderModel::AddLinkBook(const QString &readerID, const QString &bookCode)
     return true;
 }
 
+/**
+ * @brief Удаляет связь "читатель → книга" (убирает книгу из списка читателя).
+ * @param readerID ID читателя.
+ * @param bookCode Код книги.
+ * @return true если связь удалена, false если читатель/книга не найдены.
+ */
 bool ReaderModel::RemoveLinkBook(const QString &readerID, const QString &bookCode)
 {
     auto optIdx = FindReaderIndex(readerID);
@@ -187,7 +216,11 @@ bool ReaderModel::RemoveLinkBook(const QString &readerID, const QString &bookCod
     return true;
 }
 
-
+/**
+ * @brief Ищет индекс читателя по ID.
+ * @param id ID читателя.
+ * @return std::optional<int> с индексом, либо std::nullopt если не найден.
+ */
 std::optional<int> ReaderModel::FindReaderIndex(const QString &id) const
 {
     for (int i = 0; i < readers_.size(); ++i) {
@@ -212,8 +245,8 @@ std::optional<Reader> ReaderModel::FindReader(const QString &id)
 }
 
 /**
- * @brief Возвращает копию списка читателей
- * @return Копия списка всех читателей
+ * @brief Возвращает список читателей.
+ * @return Константная ссылка на список readers_.
  */
 const QList<Reader>& ReaderModel::GetReaders() const
 {
@@ -308,6 +341,11 @@ bool ReaderModel::SaveToFile(const QString& filePath)
     return true;
 }
 
+/**
+ * @brief Генерирует новый уникальный ID читателя.
+ * @param existingReaders Список существующих читателей.
+ * @return Новый ID в формате "Rxxxx".
+ */
 QString ReaderModel::GenerateReaderID(const QList<Reader> &existingReaders)
 {
     QString id;
@@ -326,6 +364,18 @@ QString ReaderModel::GenerateReaderID(const QList<Reader> &existingReaders)
     return id;
 }
 
+/**
+ * @brief Загружает читателей из XML.
+ * @param filePath Путь к XML-файлу.
+ * @return true если загрузка успешна.
+ *
+ * Поддерживает структуру:
+ * - <readers>
+ *   - <reader> ... </reader>
+ *     - <taken_books>
+ *       - <book>CODE</book>
+ *       ...
+ */
 bool ReaderModel::LoadFromXml(const QString& filePath)
 {
     QFile file(filePath);
@@ -414,8 +464,11 @@ bool ReaderModel::LoadFromXml(const QString& filePath)
     return true;
 }
 
-
-
+/**
+ * @brief Сохраняет читателей в XML.
+ * @param filePath Путь к XML-файлу.
+ * @return true если сохранение успешно.
+ */
 bool ReaderModel::SaveToXml(const QString& filePath)
 {
     QFile file(filePath);
@@ -457,6 +510,12 @@ bool ReaderModel::SaveToXml(const QString& filePath)
     return !xml.hasError();
 }
 
+/**
+ * @brief Заменяет код книги у всех читателей (например, при смене шифра книги).
+ * @param oldCode Старый код книги.
+ * @param newCode Новый код книги.
+ * @return true если хотя бы у одного читателя были изменения.
+ */
 bool ReaderModel::UpdateBookCodeForAllReaders(const QString &oldCode,
                                               const QString &newCode)
 {
@@ -485,6 +544,10 @@ bool ReaderModel::UpdateBookCodeForAllReaders(const QString &oldCode,
     return changedAny;
 }
 
+/**
+ * @brief Загружает читателей из базы данных (SQLite).
+ * @return true если загрузка успешна.
+ */
 bool ReaderModel::LoadFromDatabase()
 {
     QSqlDatabase db = DatabaseManager::instance().database();
@@ -528,6 +591,11 @@ bool ReaderModel::LoadFromDatabase()
     return true;
 }
 
+/**
+ * @brief Вставляет читателя в БД или обновляет существующую запись (по ID).
+ * @param reader Читатель для вставки/обновления.
+ * @return true если операция выполнена успешно.
+ */
 bool ReaderModel::InsertOrUpdateInDatabase(const Reader& reader)
 {
     QSqlDatabase db = DatabaseManager::instance().database();
@@ -568,6 +636,11 @@ bool ReaderModel::InsertOrUpdateInDatabase(const Reader& reader)
     return true;
 }
 
+/**
+ * @brief Удаляет читателя из БД по ID.
+ * @param id ID читателя.
+ * @return true если удаление успешно.
+ */
 bool ReaderModel::DeleteFromDatabase(const QString& id)
 {
     QSqlDatabase db = DatabaseManager::instance().database();

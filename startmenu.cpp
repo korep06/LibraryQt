@@ -3,7 +3,7 @@
  * @author Кирилл К
  * @brief Реализация стартового меню приложения
  * @version 1.0
- * @date 2024-12-19
+ * @date 2025-11-25
  */
 
 #include "startmenu.h"
@@ -21,6 +21,7 @@ StartMenu::StartMenu(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::StartMenu)
 {
+
     ui->setupUi(this);
 }
 

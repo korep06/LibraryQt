@@ -1,3 +1,16 @@
+/**
+ * @file DataBaseManager.cpp
+ * @author Кирилл К
+ * @brief Реализация менеджера базы данных (SQLite через Qt SQL).
+ * @version 1.1
+ * @date 2025-12-07
+ *
+ * В этом файле реализованы:
+ * - открытие/переиспользование подключения QSqlDatabase;
+ * - закрытие подключения;
+ * - создание таблиц при первом запуске (initSchema).
+ */
+
 #include "DatabaseManager.h"
 
 #include <QSqlQuery>
@@ -5,26 +18,59 @@
 #include <QDebug>
 
 namespace {
-// Чтобы Qt не ругался на "duplicate connection name" и не плодил дефолтные подключения.
+/**
+ * @brief Имя подключения QSqlDatabase внутри Qt.
+ *
+ * Нужен фиксированный connection name, чтобы Qt не создавал дубликаты подключений
+ * и не появлялись предупреждения про "duplicate connection name".
+ */
 const char kConnName[] = "LibraryQtConnection";
 
-// Сейчас используем SQLite. Для ODBC можно заменить на "QODBC" (см. TODO в .h).
+/**
+ * @brief Имя драйвера базы данных.
+ *
+ * Сейчас используется SQLite ("QSQLITE"). При необходимости можно заменить на ODBC
+ * ("QODBC") и настроить строку подключения.
+ */
 const char kDriverName[] = "QSQLITE";
 } // namespace
 
+/**
+ * @brief Конструктор менеджера БД.
+ *
+ * Закрытый (Singleton). Реальная инициализация соединения выполняется в open().
+ */
 DatabaseManager::DatabaseManager() = default;
 
+/**
+ * @brief Деструктор менеджера БД.
+ *
+ * Корректно закрывает соединение и удаляет его из Qt connection pool.
+ */
 DatabaseManager::~DatabaseManager()
 {
     closeConnection();
 }
 
+/**
+ * @brief Доступ к единственному экземпляру DatabaseManager.
+ * @return Ссылка на статический объект-одиночку.
+ */
 DatabaseManager& DatabaseManager::instance()
 {
     static DatabaseManager inst;
     return inst;
 }
 
+/**
+ * @brief Открывает (или создаёт) SQLite базу данных.
+ *
+ * Если соединение уже открыто — просто возвращает true.
+ * Если соединение ранее создавалось, переиспользует его по имени kConnName.
+ *
+ * @param fileName Имя файла базы данных (например, "library.db").
+ * @return true при успешном открытии и успешной инициализации схемы.
+ */
 bool DatabaseManager::open(const QString& fileName)
 {
     // Уже открыто — просто ок.
@@ -47,12 +93,23 @@ bool DatabaseManager::open(const QString& fileName)
     return initSchema();
 }
 
+/**
+ * @brief Возвращает объект подключения QSqlDatabase.
+ *
+ * @return "handle" QSqlDatabase (копирование дешёвое, это не реальная копия базы).
+ */
 QSqlDatabase DatabaseManager::database() const
 {
     // QSqlDatabase — это "handle", копирование дешёвое.
     return db_;
 }
 
+/**
+ * @brief Закрывает соединение и удаляет его из менеджера подключений Qt.
+ *
+ * @note В Qt важно вызывать removeDatabase() после того как все объекты,
+ *       использующие это соединение, перестали его использовать.
+ */
 void DatabaseManager::closeConnection()
 {
     if (!db_.isValid())
@@ -67,6 +124,15 @@ void DatabaseManager::closeConnection()
     QSqlDatabase::removeDatabase(name);
 }
 
+/**
+ * @brief Создаёт таблицы БД, если они ещё не существуют.
+ *
+ * Создаются:
+ * - books (книги)
+ * - readers (читатели)
+ *
+ * @return true если таблицы созданы успешно (или уже существовали).
+ */
 bool DatabaseManager::initSchema()
 {
     QSqlQuery q(db_);

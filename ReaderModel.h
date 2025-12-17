@@ -1,9 +1,16 @@
 /**
  * @file ReaderModel.h
  * @author Кирилл К
- * @brief Модель для управления данными о читателях
- * @version 1.0
- * @date 2024-12-19
+ * @brief Модель (Qt Model/View) для управления данными о читателях библиотеки.
+ * @version 1.1
+ * @date 2025-12-10
+ *
+ * Содержит:
+ * - абстрактный базовый класс PersonBase (полиморфизм);
+ * - структуру Reader с данными читателя;
+ * - модель ReaderModel на базе QAbstractTableModel для отображения и операций CRUD;
+ * - связь читатель ↔ книги (список выданных кодов);
+ * - загрузка/сохранение и синхронизация с БД.
  */
 
 #ifndef READERMODEL_H
@@ -17,16 +24,26 @@
 #include <QAbstractTableModel>
 #include <QDate>
 
-
+/**
+ * @class PersonBase
+ * @brief Абстрактная базовая сущность человека (пример ООП: наследование/полиморфизм).
+ *
+ * Используется как базовый тип для сущностей, у которых можно получить ФИО.
+ */
 class PersonBase {
 public:
     virtual ~PersonBase() = default;
+
+    /**
+     * @brief Получить полное имя (ФИО) в строковом виде.
+     * @return Строка с полным именем.
+     */
     virtual QString fullName() const = 0;
 };
 
 /**
  * @enum Sex
- * @brief Перечисление для обозначения пола читателя
+ * @brief Перечисление пола читателя.
  */
 enum Sex {
     Female, ///< Женский пол
@@ -35,19 +52,32 @@ enum Sex {
 
 /**
  * @struct Reader
- * @brief Структура для хранения информации о читателе
+ * @brief Данные читателя библиотеки.
+ *
+ * Наследуется от PersonBase, реализуя метод fullName().
  */
 struct Reader : public PersonBase {
-    QString ID;              ///< Уникальный идентификатор читателя
-    QString first_name;      ///< Имя читателя
-    QString second_name;     ///< Фамилия читателя
-    QString third_name;      ///< Отчество читателя
-    Sex gender;              ///< Пол читателя
-    QDate reg_date;
-    QList<QString> taken_books; ///< Список кодов взятых книг
+    QString ID;                 ///< Уникальный идентификатор читателя (ключ).
+    QString first_name;         ///< Имя.
+    QString second_name;        ///< Фамилия.
+    QString third_name;         ///< Отчество.
+    Sex gender;                 ///< Пол.
+    QDate reg_date;             ///< Дата регистрации в библиотеке.
+    QList<QString> taken_books; ///< Список кодов книг, закреплённых за читателем.
 
+    /// Конструктор по умолчанию.
     Reader() = default;
 
+    /**
+     * @brief Конструктор с параметрами.
+     * @param id Идентификатор читателя.
+     * @param first Имя.
+     * @param second Фамилия.
+     * @param third Отчество.
+     * @param g Пол.
+     * @param reg Дата регистрации.
+     * @param books Список выданных книг (коды).
+     */
     Reader(const QString& id,
            const QString& first,
            const QString& second,
@@ -64,8 +94,13 @@ struct Reader : public PersonBase {
         , taken_books(books)
     {}
 
-    Reader(const Reader& other) = default; // копирующий конструктор
+    /// Копирующий конструктор.
+    Reader(const Reader& other) = default;
 
+    /**
+     * @brief Сформировать строку ФИО читателя.
+     * @return "Имя Фамилия Отчество".
+     */
     QString fullName() const override {
         return first_name + " " + second_name + " " + third_name;
     }
@@ -73,126 +108,179 @@ struct Reader : public PersonBase {
 
 /**
  * @class ReaderModel
- * @brief Модель для отображения и управления списком читателей в табличном виде
+ * @brief Табличная модель читателей для QTableView.
  *
- * Наследует QAbstractTableModel для интеграции с Qt View/Model архитектурой.
- * Обеспечивает работу с данными читателей библиотеки.
+ * Модель хранит список Reader и предоставляет:
+ * - стандартные методы QAbstractTableModel;
+ * - добавление/удаление/поиск читателей;
+ * - связь "читатель—книга" через список кодов taken_books;
+ * - загрузку/сохранение и работу с БД.
  */
 class ReaderModel : public QAbstractTableModel {
     Q_OBJECT
 
 public:
     /**
-     * @brief Конструктор модели читателей
-     * @param readers Ссылка на список читателей для инициализации модели
-     * @param parent Родительский объект в иерархии Qt
+     * @brief Конструктор модели читателей.
+     * @param parent Родительский объект Qt.
      */
     explicit ReaderModel(QObject* parent = nullptr);
 
+    /**
+     * @brief Обновить данные читателя по индексу в модели.
+     * @param index Индекс читателя в readers_.
+     * @param reader Новые данные читателя.
+     */
     void UpdateReaderAt(int index, const Reader& reader);
 
     /**
-     * @brief Возвращает количество строк в модели
-     * @param parent Родительский индекс (не используется для табличных моделей)
-     * @return Количество читателей в модели
+     * @brief Количество строк (читателей).
+     * @param parent Родительский индекс (для таблицы не используется).
+     * @return Число читателей в модели.
      */
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
 
     /**
-     * @brief Возвращает количество столбцов в модели
-     * @param parent Родительский индекс (не используется для табличных моделей)
-     * @return Количество столбцов (полей читателя)
+     * @brief Количество столбцов (полей читателя).
+     * @param parent Родительский индекс (для таблицы не используется).
+     * @return Число столбцов модели.
      */
     int columnCount(const QModelIndex &parent = QModelIndex()) const override;
 
     /**
-     * @brief Возвращает данные для отображения в указанной ячейке
-     * @param index Индекс ячейки (строка, столбец)
-     * @param role Роль данных (отображение, редактирование и т.д.)
-     * @return Данные для указанной ячейки и роли
+     * @brief Данные ячейки таблицы.
+     * @param index Индекс (строка/столбец).
+     * @param role Роль Qt (DisplayRole и т.п.).
+     * @return QVariant со значением для отображения/использования.
      */
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
     /**
-     * @brief Возвращает заголовки для столбцов и строк
-     * @param section Номер секции (столбца или строки)
-     * @param orientation Ориентация заголовка (горизонтальный или вертикальный)
-     * @param role Роль данных заголовка
-     * @return Данные заголовка для указанной секции
+     * @brief Заголовки столбцов таблицы.
+     * @param section Номер секции.
+     * @param orientation Горизонтально/вертикально.
+     * @param role Роль Qt.
+     * @return Текст заголовка.
      */
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
     /**
-     * @brief Добавляет нового читателя в модель
-     * @param reader Читатель для добавления
+     * @brief Добавить нового читателя в модель.
+     * @param reader Читатель для добавления.
      */
     void AddReader(const Reader& reader);
 
     /**
-     * @brief Удаляет читателя из модели по идентификатору
-     * @param id Уникальный идентификатор читателя для удаления
+     * @brief Удалить читателя по идентификатору.
+     * @param id ID читателя.
+     * @return true если удалено успешно.
      */
     bool RemoveReader(const QString& id);
 
+    /**
+     * @brief Привязать книгу к читателю (добавить код в список taken_books).
+     * @param reader_id ID читателя.
+     * @param book_code Код книги.
+     * @return true если связь добавлена успешно.
+     */
     bool AddLinkBook(const QString& reader_id , const QString& book_code);
 
+    /**
+     * @brief Удалить привязку книги у читателя.
+     * @param reader_id ID читателя.
+     * @param book_code Код книги.
+     * @return true если связь удалена успешно.
+     */
     bool RemoveLinkBook(const QString& reader_id , const QString& book_code);
 
+    /**
+     * @brief Найти индекс читателя по ID.
+     * @param id ID читателя.
+     * @return Индекс читателя или std::nullopt.
+     */
     std::optional<int> FindReaderIndex(const QString &id) const;
 
     /**
-     * @brief Находит читателя по идентификатору
-     * @param id Уникальный идентификатор читателя для поиска
-     * @return std::optional с найденным читателем или std::nullopt если не найден
+     * @brief Найти читателя по ID.
+     * @param id Уникальный идентификатор читателя.
+     * @return std::optional с читателем или std::nullopt если не найден.
      */
     std::optional<Reader> FindReader(const QString& id);
 
     /**
-     * @brief Возвращает копию списка читателей
-     * @return Копия списка всех читателей
+     * @brief Получить список читателей.
+     * @return Константная ссылка на список readers_.
      */
     const QList<Reader>& GetReaders() const;
 
     /**
-     * @brief Загружает список читателей из файла
-     * @param filePath Путь к файлу для загрузки
-     * @return true если загрузка успешна, false в случае ошибки
+     * @brief Загрузить читателей из файла.
+     * @param filePath Путь к файлу.
+     * @return true если успешно.
      */
     bool LoadFromFile(const QString& filePath);
 
     /**
-     * @brief Сохраняет список читателей в файл
-     * @param filePath Путь к файлу для сохранения
-     * @return true если сохранение успешно, false в случае ошибки
+     * @brief Сохранить читателей в файл.
+     * @param filePath Путь к файлу.
+     * @return true если успешно.
      */
     bool SaveToFile(const QString& filePath);
 
     /**
-     * @brief Загружает список читателей из XML
+     * @brief Загрузить читателей из XML.
+     * @param filePath Путь к XML файлу.
+     * @return true если успешно.
      */
     bool LoadFromXml(const QString& filePath);
 
     /**
-     * @brief Сохраняет список читателей в XML
+     * @brief Сохранить читателей в XML.
+     * @param filePath Путь к XML файлу.
+     * @return true если успешно.
      */
     bool SaveToXml(const QString& filePath);
 
-
+    /**
+     * @brief Сгенерировать новый уникальный ID читателя.
+     * @param existingReaders Список уже существующих читателей.
+     * @return Новый ID.
+     */
     static QString GenerateReaderID(const QList<Reader>& existingReaders);
 
+    /**
+     * @brief Обновить код книги у всех читателей (например, при смене шифра книги).
+     * @param oldCode Старый код книги.
+     * @param newCode Новый код книги.
+     * @return true если обновление выполнено.
+     */
     bool UpdateBookCodeForAllReaders(const QString &oldCode,
                                      const QString &newCode);
 
+    /**
+     * @brief Загрузить читателей из базы данных в модель.
+     * @return true если успешно.
+     */
     bool LoadFromDatabase();
+
+    /**
+     * @brief Вставить читателя в БД или обновить существующую запись.
+     * @param reader Читатель для вставки/обновления.
+     * @return true если успешно.
+     */
     bool InsertOrUpdateInDatabase(const Reader& reader);
+
+    /**
+     * @brief Удалить читателя из БД по ID.
+     * @param id ID читателя.
+     * @return true если успешно.
+     */
     bool DeleteFromDatabase(const QString& id);
 
-
 private:
 
-
 private:
-    QList<Reader> readers_; ///< Список читателей, управляемых моделью
+    QList<Reader> readers_; ///< Список читателей, управляемых моделью.
 };
 
 #endif // READERMODEL_H

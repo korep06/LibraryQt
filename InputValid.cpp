@@ -1,29 +1,61 @@
+/**
+ * @file InputValid.cpp
+ * @author Кирилл К
+ * @brief Реализация валидатора пользовательского ввода.
+ * @version 1.1
+ * @date 2025-12-13
+ *
+ * В этом файле реализованы проверки:
+ * - корректности названия/автора книги;
+ * - корректности ФИО читателя;
+ * - корректности форматов кода книги/ID читателя;
+ * - корректности строки поиска.
+ *
+ * При ошибках бросаются исключения из Exception.h.
+ */
+
 #include "InputValid.h"
 #include "Exception.h"
 
 #include <QRegularExpression>
 
-// ----------------------------------
-// Регулярки (чтобы не создавать их на каждый вызов)
-// ЛОГИКА НЕ МЕНЯЕТСЯ — только вынесено в static const
-// ----------------------------------
+/**
+ * @namespace (anonymous)
+ * @brief Локальные (внутрифайловые) регулярные выражения.
+ *
+ * Регулярки вынесены в static const, чтобы не создавать их на каждый вызов.
+ * ЛОГИКА НЕ МЕНЯЕТСЯ — только хранение regex как констант.
+ */
 namespace {
 
+/// Повторяющаяся пунктуация/символы 3+ раза подряд.
 const QRegularExpression kLongRepeatedPunctRe(QStringLiteral("([\\p{P}\\p{S}])\\1{2,}"));
+
+/// Подряд идущие дефисы/апострофы/бэктики (2+).
 const QRegularExpression kAdjacentInvalidHyphensOrAposRe(QStringLiteral("(-{2,}|'{2,}|`{2,})"));
 
+/// Пунктуация в начале строки.
 const QRegularExpression kStartRepeatPunctRe(QStringLiteral("^[\\p{P}\\p{S}]{1,}"));
+
+/// Разрешённые символы для названия книги (буквы/цифры/пробелы + базовая пунктуация).
 const QRegularExpression kAllowedTitleRe(QStringLiteral(
     "^[\\p{L}\\p{N}\\s\\.,:;!\\?()\\[\\]{}'\"«»\\-–—/\\\\+&%#@]+$"));
 
+/// Разрешённые символы для автора.
 const QRegularExpression kAuthorRe(QStringLiteral("^[\\p{L}\\-\\'\\.\\s]+$"));
+
+/// Разрешённые символы для полей ФИО.
 const QRegularExpression kPersonNameRe(QStringLiteral("^[\\p{L}\\-\\'\\.\\s]+$"));
 
+/// Формат кода книги: B + 3–5 цифр.
 const QRegularExpression kBookCodeRe(QStringLiteral("^B[0-9]{3,5}$"),
                                      QRegularExpression::CaseInsensitiveOption);
+
+/// Формат ID читателя: R + 4 цифры.
 const QRegularExpression kReaderIdRe(QStringLiteral("^R[0-9]{4}$"),
                                      QRegularExpression::CaseInsensitiveOption);
 
+/// Разрешённые символы для поискового запроса.
 const QRegularExpression kSearchRe(QStringLiteral(
     "^[\\p{L}\\p{N}\\s\\.,:;!\\?()\\[\\]{}'\"«»\\-–—/\\\\+&%#@]+$"));
 
@@ -33,11 +65,21 @@ const QRegularExpression kSearchRe(QStringLiteral(
 // Вспомогательные функции
 // ----------------------------------
 
+/**
+ * @brief Нормализует пробелы в строке.
+ * @param s Исходная строка.
+ * @return Строка без лишних пробелов (Qt simplified()).
+ */
 QString InputValid::normalizeSpaces(const QString &s)
 {
     return s.simplified();
 }
 
+/**
+ * @brief Подсчитывает количество букв в строке.
+ * @param s Строка.
+ * @return Количество символов, для которых QChar::isLetter() == true.
+ */
 int InputValid::countLetters(const QString &s)
 {
     int cnt = 0;
@@ -46,6 +88,11 @@ int InputValid::countLetters(const QString &s)
     return cnt;
 }
 
+/**
+ * @brief Подсчитывает количество цифр в строке.
+ * @param s Строка.
+ * @return Количество символов, для которых QChar::isDigit() == true.
+ */
 int InputValid::countDigits(const QString &s)
 {
     int cnt = 0;
@@ -54,16 +101,31 @@ int InputValid::countDigits(const QString &s)
     return cnt;
 }
 
+/**
+ * @brief Проверяет, есть ли подряд повторяющаяся пунктуация/символы.
+ * @param s Строка.
+ * @return true если есть повтор 3+ одинаковых знаков подряд.
+ */
 bool InputValid::hasLongRepeatedPunct(const QString &s)
 {
     return kLongRepeatedPunctRe.match(s).hasMatch();
 }
 
+/**
+ * @brief Проверяет наличие подряд идущих дефисов/апострофов/бэктиков.
+ * @param s Строка.
+ * @return true если есть запрещённые последовательности (например "--" или "''").
+ */
 bool InputValid::hasAdjacentInvalidHyphensOrApostrophes(const QString &s)
 {
     return kAdjacentInvalidHyphensOrAposRe.match(s).hasMatch();
 }
 
+/**
+ * @brief Возвращает индекс первого буквенно-цифрового символа.
+ * @param s Строка.
+ * @return Индекс первого isLetterOrNumber(), либо -1 если не найден.
+ */
 int InputValid::firstAlnumIndex(const QString &s)
 {
     for (int i = 0; i < s.size(); ++i)
@@ -72,6 +134,11 @@ int InputValid::firstAlnumIndex(const QString &s)
     return -1;
 }
 
+/**
+ * @brief Возвращает индекс последнего буквенно-цифрового символа.
+ * @param s Строка.
+ * @return Индекс последнего isLetterOrNumber(), либо -1 если не найден.
+ */
 int InputValid::lastAlnumIndex(const QString &s)
 {
     for (int i = s.size() - 1; i >= 0; --i)
@@ -80,6 +147,13 @@ int InputValid::lastAlnumIndex(const QString &s)
     return -1;
 }
 
+/**
+ * @brief Общая проверка поля ФИО (имя/фамилия/отчество).
+ * @param value Проверяемое значение.
+ * @param fieldName Название поля для текста ошибки.
+ *
+ * @throw InvalidReaderException если поле пустое или содержит недопустимые символы.
+ */
 void InputValid::validatePersonNameField(const QString &value, const QString &fieldName)
 {
     // Сообщения и логика сохранены (как было в лямбде)
@@ -106,6 +180,16 @@ void InputValid::validatePersonNameField(const QString &value, const QString &fi
 // Проверки логики
 // ----------------------------------
 
+/**
+ * @brief Проверка полей при добавлении книги.
+ * @param name Название книги.
+ * @param author Автор книги.
+ *
+ * @throw EmptyBookNameException если название пустое.
+ * @throw InvalidBookNameException если формат/символы названия недопустимы.
+ * @throw EmptyAuthorException если автор пустой.
+ * @throw InvalidAuthorException если формат/символы автора недопустимы.
+ */
 void InputValid::checkAddBook(const QString &name, const QString &author)
 {
     const QString nameNorm = normalizeSpaces(name);
@@ -172,11 +256,28 @@ void InputValid::checkAddBook(const QString &name, const QString &author)
         throw InvalidAuthorException("В имени автора минимум 2 буквы.");
 }
 
+/**
+ * @brief Проверка полей при редактировании книги.
+ * @param name Название книги.
+ * @param author Автор книги.
+ *
+ * В текущей реализации использует те же правила, что и checkAddBook().
+ */
 void InputValid::checkEditBook(const QString &name, const QString &author)
 {
     checkAddBook(name, author);
 }
 
+/**
+ * @brief Проверка полей при добавлении читателя.
+ * @param surname Фамилия.
+ * @param name Имя.
+ * @param thname Отчество (опционально).
+ *
+ * @throw EmptyReaderSurnameException если фамилия пустая.
+ * @throw EmptyReaderNameException если имя пустое.
+ * @throw InvalidReaderException если формат полей некорректен.
+ */
 void InputValid::checkAddReader(const QString &surname,
                                 const QString &name,
                                 const std::optional<QString> &thname)
@@ -202,6 +303,13 @@ void InputValid::checkAddReader(const QString &surname,
     }
 }
 
+/**
+ * @brief Проверка данных для выдачи книги.
+ * @param code Код (шифр) книги.
+ * @param readerID ID читателя.
+ *
+ * @throw InvalidInputException если поля пустые или не соответствуют шаблону.
+ */
 void InputValid::checkGiveOutInput(const QString &code, const QString &readerID)
 {
     const QString c = code.trimmed().toUpper();
@@ -217,6 +325,12 @@ void InputValid::checkGiveOutInput(const QString &code, const QString &readerID)
         throw InvalidInputException("Формат ID читателя: R + 4 цифры.");
 }
 
+/**
+ * @brief Проверка строки поиска книги.
+ * @param query Введённая строка (код/название).
+ *
+ * @throw InvalidInputException если строка пустая или содержит недопустимые символы.
+ */
 void InputValid::checkBookSearch(const QString &query)
 {
     const QString q = query.trimmed();

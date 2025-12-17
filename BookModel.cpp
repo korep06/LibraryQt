@@ -2,8 +2,8 @@
  * @file BookModel.cpp
  * @author Кирилл К
  * @brief Реализация методов модели книг
- * @version 1.0
- * @date 2024-12-19
+ * @version 1.1
+ * @date 2025-12-09
  */
 
 #include "BookModel.h"
@@ -15,16 +15,13 @@
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonArray>
-#include <QList>
 #include <QJsonObject>
 #include <QRandomGenerator>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
+#include <QDebug>
 #include <QSqlQuery>
 #include <QSqlError>
-
-
-//BookModel::BookModel() {}
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 /**
  * @brief Конструктор модели книг
@@ -34,6 +31,14 @@
 BookModel::BookModel(QObject *parent)
     : QAbstractTableModel(parent) {}
 
+/**
+ * @brief Обновляет книгу по индексу модели и синхронизирует изменения с БД.
+ * @param index Индекс книги в списке books_.
+ * @param book Новое значение книги.
+ *
+ * Если код (первичный ключ) не изменился — выполняется обычное обновление записи.
+ * Если код изменился — используется отдельный запрос обновления по старому коду.
+ */
 void BookModel::UpdateBookAt(int index, const Book &book)
 {
     if (index < 0 || index >= books_.size())
@@ -80,7 +85,8 @@ QVariant BookModel::data(const QModelIndex &index, int role) const {
     if (!index.isValid() || role != Qt::DisplayRole) {
         return QVariant();
     }
-    const Book& book = books_[index.row()];
+
+    const Book& book = books_.at(index.row());
     switch (index.column()) {
     case 0: return book.code;     ///< Код книги
 
@@ -142,7 +148,7 @@ bool BookModel::RemoveBook(const QString& code) {
         if (books_[i].code == code) {
             if (books_[i].is_taken) {
                 throw BookDeleteForbiddenException(
-                    QStringLiteral("Невозможно удалить книгу: она сейчас выдана читателю")
+                    QString("Нельзя удалить книгу '%1': она выдана читателю.").arg(code)
                     );
             }
             beginRemoveRows(QModelIndex(), i, i);
@@ -159,7 +165,7 @@ bool BookModel::RemoveBook(const QString& code) {
 /**
  * @brief Находит книгу по коду
  * @param code Уникальный код книги для поиска
- * @return Найденная книга или пустая книга если не найдена
+ * @return Найденная книга или "пустая" книга если не найдена
  */
 Book BookModel::FindBook(const QString& code) const {
     for (const auto& book : books_) {
@@ -170,6 +176,11 @@ Book BookModel::FindBook(const QString& code) const {
     return Book{};  ///< Пустая книга, если не найдено
 }
 
+/**
+ * @brief Ищет индекс книги по её коду.
+ * @param code Код (шифр) книги.
+ * @return Индекс книги в books_, либо std::nullopt если не найдено.
+ */
 std::optional<int> BookModel::FindBookIndex(const QString &code) const
 {
     for (int i = 0; i < books_.size(); ++i) {
@@ -178,97 +189,45 @@ std::optional<int> BookModel::FindBookIndex(const QString &code) const
     return std::nullopt;
 }
 
+/**
+ * @brief Устанавливает признак выдачи книги и дату выдачи.
+ * @param code Код книги.
+ * @param isTaken true — выдана, false — возвращена.
+ * @param date Дата выдачи (может быть задана/сброшена).
+ * @return true если книга найдена и обновлена, иначе false.
+ */
 bool BookModel::SetBookTaken(const QString &code, bool isTaken, std::optional<QDate> &date)
 {
-    auto optIdx = FindBookIndex(code);
-    if (!optIdx.has_value())
-        return false;
+    for (int i = 0; i < books_.size(); ++i) {
+        if (books_[i].code == code) {
+            books_[i].is_taken = isTaken;
+            books_[i].date_taken = date;
 
-    const int idx = optIdx.value();
+            emit dataChanged(index(i, 0), index(i, columnCount() - 1));
 
-    books_[idx].is_taken = isTaken;
-    books_[idx].date_taken = isTaken ? date : std::nullopt;
-
-    emit dataChanged(index(idx, 0), index(idx, columnCount() - 1));
-
-    InsertOrUpdateInDatabase(books_[idx]);
-    return true;
+            InsertOrUpdateInDatabase(books_[i]);
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
- * @brief Возвращает константную ссылку на список книг
- * @return Константная ссылка на список всех книг
+ * @brief Возвращает список всех книг
+ * @return Константная ссылка на список книг
  */
 const QList<Book>& BookModel::GetBooks() const {
     return books_;
 }
 
 /**
- * @brief Загружает список книг из файла
- * @param filePath Путь к файлу для загрузки
- * @return true если загрузка успешна, false в случае ошибки
- */
-bool BookModel::LoadFromFile(const QString& filePath) {
-    spdlog::info("Загрузка книг из файла {}", filePath.toStdString());
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "Failed to open file for reading:" << filePath;
-        spdlog::warn("Не удалось открыть файл для чтения: {}",
-                     filePath.toStdString());
-        return false;
-    }
-
-    QByteArray data = file.readAll();
-    QJsonDocument doc = QJsonDocument::fromJson(data);
-    if (doc.isNull() || !doc.isArray()) {
-        qDebug() << "Invalid JSON format";
-        return false;
-    }
-
-    books_.clear();
-    QJsonArray array = doc.array();
-    for (const auto& item : array) {
-        QJsonObject obj = item.toObject();
-        Book book;
-        book.code = obj["code"].toString();
-        book.name = obj["name"].toString();
-        book.author = obj["author"].toString();
-        book.is_taken = obj["is_taken"].toBool();
-        QString dateStr = obj["date_taken"].toString();
-        book.date_taken = dateStr.isEmpty() ? std::nullopt : std::optional<QDate>(QDate::fromString(dateStr , "dd/MM/yyyy"));
-        books_.append(book);
-    }
-    spdlog::info("Успешная загрузка книг, всего: {}", books_.size());
-    return true;
-}
-
-QString BookModel::GenerateBookCode(const QList<Book> &existingBooks)
-{
-    QString code;
-    bool unique = false;
-
-    while (!unique) {
-        code = QString("B%1").arg(QRandomGenerator::global()->bounded(1000, 9999));
-        unique = true;
-        for (const auto& book : existingBooks) {
-            if (book.code == code) {
-                unique = false;
-                break;
-            }
-        }
-    }
-    return code;
-}
-
-/**
- * @brief Сохраняет список книг в файл
+ * @brief Сохраняет список книг в JSON файл
  * @param filePath Путь к файлу для сохранения
- * @return true если сохранение успешно, false в случае ошибки
+ * @return true если сохранение успешно, иначе false
  */
 bool BookModel::SaveToFile(const QString& filePath) const {
     QFile file(filePath);
     if (!file.open(QIODevice::WriteOnly)) {
-        qDebug() << "Failed to open file for writing:" << filePath;
         return false;
     }
 
@@ -288,48 +247,96 @@ bool BookModel::SaveToFile(const QString& filePath) const {
     return true;
 }
 
+/**
+ * @brief Загружает список книг из JSON файла
+ * @param filePath Путь к файлу для загрузки
+ * @return true если загрузка успешна, иначе false
+ */
+bool BookModel::LoadFromFile(const QString& filePath) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+
+    QByteArray data = file.readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+    if (!doc.isArray()) {
+        return false;
+    }
+
+    QJsonArray array = doc.array();
+    books_.clear();
+    for (const auto& value : array) {
+        QJsonObject obj = value.toObject();
+        Book book;
+        book.code = obj["code"].toString();
+        book.name = obj["name"].toString();
+        book.author = obj["author"].toString();
+        book.is_taken = obj["is_taken"].toBool();
+        QString dateStr = obj["date_taken"].toString();
+        book.date_taken = dateStr.isEmpty() ? std::nullopt  : std::optional<QDate>(QDate::fromString(dateStr , "dd/MM/yyyy"));
+        books_.append(book);
+    }
+    spdlog::info("Успешная загрузка книг, всего: {}", books_.size());
+    return true;
+}
+
+/**
+ * @brief Генерирует новый уникальный код книги.
+ * @param existingBooks Список существующих книг (для проверки уникальности).
+ * @return Сгенерированный код, который отсутствует в existingBooks.
+ */
+QString BookModel::GenerateBookCode(const QList<Book> &existingBooks)
+{
+    QString code;
+    bool unique = false;
+
+    while (!unique) {
+        code = QString("B%1").arg(QRandomGenerator::global()->bounded(1000, 9999));
+        unique = true;
+        for (const auto& book : existingBooks) {
+            if (book.code == code) {
+                unique = false;
+                break;
+            }
+        }
+    }
+    return code;
+}
+
+/**
+ * @brief Загружает список книг из XML-файла.
+ * @param filePath Путь к XML-файлу.
+ * @return true если загрузка успешна.
+ */
 bool BookModel::LoadFromXml(const QString& filePath)
 {
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qDebug() << "Failed to open xml file for reading:" << filePath;
+        qDebug() << "Failed to open xml file:" << filePath;
         return false;
     }
 
     QXmlStreamReader xml(&file);
     QList<Book> tmp;
 
-    while (!xml.atEnd() && !xml.hasError()) {
-        auto token = xml.readNext();
-        if (token == QXmlStreamReader::StartElement && xml.name() == u"book") {
+    while (!xml.atEnd()) {
+        xml.readNext();
+        if (xml.isStartElement() && xml.name() == "book") {
             Book book;
-
-            while (!xml.atEnd()) {
+            while (!(xml.isEndElement() && xml.name() == "book") && !xml.atEnd()) {
                 xml.readNext();
-
-                if (xml.tokenType() == QXmlStreamReader::EndElement && xml.name() == u"book")
-                    break;
-
-                if (xml.tokenType() != QXmlStreamReader::StartElement)
-                    continue;
-
-                const auto tag = xml.name();
-                const QString text = xml.readElementText();
-
-                if (tag == u"code")        book.code = text;
-                else if (tag == u"name")   book.name = text;
-                else if (tag == u"author") book.author = text;
-                else if (tag == u"is_taken") {
-                    const QString v = text.trimmed().toLower();
-                    book.is_taken = (v == "1" || v == "true");
-                } else if (tag == u"date_taken") {
-                    QString v = text.trimmed();
-                    book.date_taken = v.isEmpty()
-                                          ? std::nullopt
-                                          : std::optional<QDate>(QDate::fromString(v, "dd/MM/yyyy"));
+                if (xml.isStartElement()) {
+                    if (xml.name() == "code") book.code = xml.readElementText();
+                    else if (xml.name() == "name") book.name = xml.readElementText();
+                    else if (xml.name() == "author") book.author = xml.readElementText();
+                    else if (xml.name() == "is_taken") book.is_taken = (xml.readElementText() == "1");
+                    else if (xml.name() == "date_taken") {
+                        QString ds = xml.readElementText();
+                        book.date_taken = ds.isEmpty() ? std::nullopt : std::optional<QDate>(QDate::fromString(ds, "dd/MM/yyyy"));
+                    }
                 }
             }
-
             tmp.append(book);
         }
     }
@@ -343,6 +350,11 @@ bool BookModel::LoadFromXml(const QString& filePath)
     return true;
 }
 
+/**
+ * @brief Сохраняет список книг в XML-файл.
+ * @param filePath Путь к XML-файлу.
+ * @return true если сохранение успешно.
+ */
 bool BookModel::SaveToXml(const QString& filePath) const
 {
     QFile file(filePath);
@@ -358,23 +370,26 @@ bool BookModel::SaveToXml(const QString& filePath) const
 
     for (const auto& book : books_) {
         xml.writeStartElement("book");
+
         xml.writeTextElement("code", book.code);
         xml.writeTextElement("name", book.name);
         xml.writeTextElement("author", book.author);
         xml.writeTextElement("is_taken", book.is_taken ? "1" : "0");
-        xml.writeTextElement(
-            "date_taken",
-            book.date_taken ? book.date_taken->toString("dd/MM/yyyy") : ""
-            );
+        xml.writeTextElement("date_taken", book.date_taken ? book.date_taken->toString("dd/MM/yyyy") : "");
+
         xml.writeEndElement(); // book
     }
 
     xml.writeEndElement(); // books
     xml.writeEndDocument();
-    return !xml.hasError();
+
+    return true;
 }
 
-
+/**
+ * @brief Загружает список книг из базы данных в модель.
+ * @return true если загрузка успешна.
+ */
 bool BookModel::LoadFromDatabase()
 {
     QSqlDatabase db = DatabaseManager::instance().database();
@@ -383,31 +398,36 @@ bool BookModel::LoadFromDatabase()
 
     QSqlQuery q(db);
     if (!q.exec("SELECT code, name, author, is_taken, date_taken FROM books")) {
-        qDebug() << "LoadFromDatabase books error:" << q.lastError().text();
+        qDebug() << "LoadFromDatabase error:" << q.lastError().text();
         return false;
     }
 
-    beginResetModel();
-    books_.clear();
-
+    QList<Book> tmp;
     while (q.next()) {
-        const QString code = q.value(0).toString();
-        const QString name = q.value(1).toString();
-        const QString auth = q.value(2).toString();
-        const bool taken   = q.value(3).toBool();
-        const QString dateStr = q.value(4).toString();
+        Book b;
+        b.code = q.value(0).toString();
+        b.name = q.value(1).toString();
+        b.author = q.value(2).toString();
+        b.is_taken = q.value(3).toInt() != 0;
 
-        std::optional<QDate> dt;
-        if (!dateStr.isEmpty())
-            dt = QDate::fromString(dateStr, "dd/MM/yyyy");
+        const QString ds = q.value(4).toString();
+        b.date_taken = ds.isEmpty() ? std::nullopt : std::optional<QDate>(QDate::fromString(ds, Qt::ISODate));
 
-        books_.append(Book(code, name, auth, taken, dt));
+        tmp.append(b);
     }
 
+    beginResetModel();
+    books_.swap(tmp);
     endResetModel();
+
     return true;
 }
 
+/**
+ * @brief Вставляет книгу в БД или обновляет существующую запись (по коду).
+ * @param book Книга для вставки/обновления.
+ * @return true если операция выполнена успешно.
+ */
 bool BookModel::InsertOrUpdateInDatabase(const Book& book)
 {
     QSqlDatabase db = DatabaseManager::instance().database();
@@ -417,31 +437,34 @@ bool BookModel::InsertOrUpdateInDatabase(const Book& book)
     QSqlQuery q(db);
     q.prepare(
         "INSERT INTO books(code, name, author, is_taken, date_taken) "
-        "VALUES (:code, :name, :author, :taken, :date) "
+        "VALUES(:code, :name, :author, :is_taken, :date_taken) "
         "ON CONFLICT(code) DO UPDATE SET "
-        " name       = excluded.name,"
-        " author     = excluded.author,"
-        " is_taken   = excluded.is_taken,"
-        " date_taken = excluded.date_taken"
+        "name=excluded.name, author=excluded.author, is_taken=excluded.is_taken, date_taken=excluded.date_taken"
         );
 
     q.bindValue(":code", book.code);
     q.bindValue(":name", book.name);
     q.bindValue(":author", book.author);
-    q.bindValue(":taken", book.is_taken ? 1 : 0);
-    q.bindValue(":date",
-                book.date_taken
-                    ? book.date_taken->toString("dd/MM/yyyy")
-                    : QString());
+    q.bindValue(":is_taken", book.is_taken ? 1 : 0);
+
+    if (book.date_taken.has_value())
+        q.bindValue(":date_taken", book.date_taken->toString(Qt::ISODate));
+    else
+        q.bindValue(":date_taken", "");
 
     if (!q.exec()) {
-        qDebug() << "InsertOrUpdateInDatabase book error:" << q.lastError().text();
+        qDebug() << "InsertOrUpdate error:" << q.lastError().text();
         return false;
     }
+
     return true;
 }
 
-
+/**
+ * @brief Удаляет книгу из базы данных по коду.
+ * @param code Код (шифр) книги.
+ * @return true если удаление успешно.
+ */
 bool BookModel::DeleteFromDatabase(const QString& code)
 {
     QSqlDatabase db = DatabaseManager::instance().database();
@@ -449,16 +472,23 @@ bool BookModel::DeleteFromDatabase(const QString& code)
         return false;
 
     QSqlQuery q(db);
-    q.prepare("DELETE FROM books WHERE code = :code");
+    q.prepare("DELETE FROM books WHERE code=:code");
     q.bindValue(":code", code);
 
     if (!q.exec()) {
-        qDebug() << "DeleteFromDatabase book error:" << q.lastError().text();
+        qDebug() << "DeleteFromDatabase error:" << q.lastError().text();
         return false;
     }
+
     return true;
 }
 
+/**
+ * @brief Обновляет код (первичный ключ) книги в базе данных.
+ * @param oldCode Старый код книги.
+ * @param book Книга с новым кодом и актуальными данными.
+ * @return true если обновление успешно.
+ */
 bool BookModel::UpdateBookCodeInDatabase(const QString &oldCode, const Book &book)
 {
     QSqlDatabase db = DatabaseManager::instance().database();
@@ -467,29 +497,21 @@ bool BookModel::UpdateBookCodeInDatabase(const QString &oldCode, const Book &boo
 
     QSqlQuery q(db);
     q.prepare(
-        "UPDATE books SET "
-        " code = :newCode,"
-        " name = :name,"
-        " author = :author,"
-        " is_taken = :taken,"
-        " date_taken = :date "
-        "WHERE code = :oldCode"
+        "UPDATE books SET code=:newCode, name=:name, author=:author, is_taken=:is_taken, date_taken=:date_taken "
+        "WHERE code=:oldCode"
         );
 
     q.bindValue(":newCode", book.code);
     q.bindValue(":name", book.name);
     q.bindValue(":author", book.author);
-    q.bindValue(":taken", book.is_taken ? 1 : 0);
-    q.bindValue(":date",
-                book.date_taken
-                    ? book.date_taken->toString("dd/MM/yyyy")
-                    : QString());
+    q.bindValue(":is_taken", book.is_taken ? 1 : 0);
+    q.bindValue(":date_taken", book.date_taken ? book.date_taken->toString(Qt::ISODate) : "");
     q.bindValue(":oldCode", oldCode);
 
     if (!q.exec()) {
         qDebug() << "UpdateBookCodeInDatabase error:" << q.lastError().text();
         return false;
     }
+
     return true;
 }
-
