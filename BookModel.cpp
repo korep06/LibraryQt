@@ -9,7 +9,7 @@
 #include "BookModel.h"
 #include "Exception.h"
 #include "spdlog/spdlog.h"
-#include "DatabaseManager.h"
+#include "DataBaseManager.h"
 
 
 #include <QFile>
@@ -247,39 +247,7 @@ bool BookModel::SaveToFile(const QString& filePath) const {
     return true;
 }
 
-/**
- * @brief Загружает список книг из JSON файла
- * @param filePath Путь к файлу для загрузки
- * @return true если загрузка успешна, иначе false
- */
-bool BookModel::LoadFromFile(const QString& filePath) {
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return false;
-    }
 
-    QByteArray data = file.readAll();
-    QJsonDocument doc = QJsonDocument::fromJson(data);
-    if (!doc.isArray()) {
-        return false;
-    }
-
-    QJsonArray array = doc.array();
-    books_.clear();
-    for (const auto& value : array) {
-        QJsonObject obj = value.toObject();
-        Book book;
-        book.code = obj["code"].toString();
-        book.name = obj["name"].toString();
-        book.author = obj["author"].toString();
-        book.is_taken = obj["is_taken"].toBool();
-        QString dateStr = obj["date_taken"].toString();
-        book.date_taken = dateStr.isEmpty() ? std::nullopt  : std::optional<QDate>(QDate::fromString(dateStr , "dd/MM/yyyy"));
-        books_.append(book);
-    }
-    spdlog::info("Успешная загрузка книг, всего: {}", books_.size());
-    return true;
-}
 
 /**
  * @brief Генерирует новый уникальный код книги.

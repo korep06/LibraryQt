@@ -7,7 +7,7 @@
 #include "./ui_mainwindow.h"
 #include "Exception.h"
 #include "spdlog/spdlog.h"
-#include "DatabaseManager.h"
+#include "DataBaseManager.h"
 #include "InputValid.h"
 
 #include <QMessageBox>
@@ -34,11 +34,10 @@
 #include <optional>
 
 
-static auto logMainWindow = spdlog::get("main");
+const static auto logMainWindow = spdlog::get("main");
 
 namespace {
 
-// Чтобы не копипастить 100 раз одно и то же (proxy -> source)
 QModelIndex mapToSourceIndex(const QAbstractItemView* view, const QModelIndex& idx)
 {
     if (!view || !idx.isValid())
@@ -298,20 +297,6 @@ MainWindow::MainWindow(QWidget *parent)
     bool booksLoadedDb   = bookModel_->LoadFromDatabase();
     bool readersLoadedDb = readerModel_->LoadFromDatabase();
 
-    /*
-    // --- КНИГИ: сначала JSON, потом XML, потом тестовые данные ---
-    bool booksLoadedJson = bookModel_->LoadFromFile("books.json");
-    if (!booksLoadedJson || bookModel_->GetBooks().isEmpty()) {
-        bool booksLoadedXml = bookModel_->LoadFromXml("books.xml");
-    }
-
-    // --- ЧИТАТЕЛИ: сначала JSON, потом XML, потом тестовые данные ---
-    bool readersLoadedJson = readerModel_->LoadFromFile("readers.json");
-    if (!readersLoadedJson || readerModel_->GetReaders().isEmpty()) {
-        bool readersLoadedXml = readerModel_->LoadFromXml("readers.xml");
-    }
-    */
-
     // Установка моделей в таблицы
     ui->tbl_view_book->setModel(bookModel_);
     ui->tbl_view_reader->setModel(readerModel_);
@@ -424,6 +409,22 @@ void MainWindow::on_pb_giveBook_clicked() { act_giveout_book(); }
 /**
  * @brief Сохраняет книги и читателей в файл.
  */
+
+/**
+ * @brief Слот: кнопка "Получить книгу" вызывает возврат книги.
+ */
+void MainWindow::on_pb_getBook_clicked() {
+    act_return_book();
+}
+
+/**
+ * @brief Обработчик кнопки «Информация о читателе».
+ */
+void MainWindow::on_pb_get_info_reader_clicked()
+{
+    act_get_info();
+}
+
 void MainWindow::act_save_file()
 {
     const bool ok = saveAllData(bookModel_, readerModel_);
@@ -649,12 +650,11 @@ void MainWindow::act_add_book()
 
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
+            nameEdit.setText(nameEdit.text().simplified());
+            authorEdit.setText(authorEdit.text().simplified());
+
             InputValid::checkAddBook(nameEdit.text(), authorEdit.text());
             dialog.accept();
-
-        } catch (const AppException &ex) {
-            QMessageBox::warning(&dialog, "Ошибка", ex.what());
-            spdlog::warn("Ошибка при добавлении книги: {}", ex.what());
         } catch (const std::exception &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
             spdlog::warn("Ошибка при добавлении книги: {}", ex.what());
@@ -666,8 +666,8 @@ void MainWindow::act_add_book()
     if (dialog.exec() == QDialog::Accepted) {
         Book book;
         book.code = BookModel::GenerateBookCode(bookModel_->GetBooks());
-        book.name = nameEdit.text().trimmed();
-        book.author = authorEdit.text().trimmed();
+        book.name = nameEdit.text();
+        book.author = authorEdit.text();
         book.is_taken = false;
         book.date_taken = std::nullopt;
         bookModel_->AddBook(book);
@@ -696,8 +696,8 @@ void MainWindow::act_add_reader()
     sexCombo.addItem("Женщина", false);
 
     QPushButton okButton("Добавить"), cancelButton("Отмена");
-    form.addRow("Фамилия:", &firstEdit);
-    form.addRow("Имя:", &secondEdit);
+    form.addRow("Фамилия:", &secondEdit);
+    form.addRow("Имя:", &firstEdit);
     form.addRow("Отчество:", &thirdEdit);
     form.addRow("Пол:", &sexCombo);
     form.addRow(&okButton, &cancelButton);
@@ -706,7 +706,11 @@ void MainWindow::act_add_reader()
 
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            const QString th = thirdEdit.text().trimmed();
+            firstEdit.setText(firstEdit.text().simplified());
+            secondEdit.setText(secondEdit.text().simplified());
+            thirdEdit.setText(thirdEdit.text().simplified()); // если есть
+
+            const QString th = thirdEdit.text();
             const std::optional<QString> thOpt = th.isEmpty()
                                                      ? std::nullopt
                                                      : std::optional<QString>(th);
@@ -716,16 +720,16 @@ void MainWindow::act_add_reader()
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
         } catch (const std::exception &ex) {
-            QMessageBox::warning(&dialog, "Ошибка", ex.what());
+            QMessageBox::warning(&dialog, "Непредвиденная ошибка", ex.what());
         }
     });
 
     if (dialog.exec() == QDialog::Accepted) {
         Reader reader;
         reader.ID = ReaderModel::GenerateReaderID(readerModel_->GetReaders());
-        reader.first_name  = firstEdit.text().trimmed();
-        reader.second_name = secondEdit.text().trimmed();
-        reader.third_name  = thirdEdit.text().trimmed();
+        reader.first_name  = firstEdit.text();
+        reader.second_name = secondEdit.text();
+        reader.third_name  = thirdEdit.text();
         reader.gender = sexCombo.currentData().toBool() ? Sex::Male : Sex::Female;
         reader.reg_date = QDate::currentDate();
         readerModel_->AddReader(reader);
@@ -775,6 +779,8 @@ void MainWindow::act_edit_book()
 
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
+            nameEdit.setText(nameEdit.text().simplified());
+            authorEdit.setText(authorEdit.text().simplified());
             InputValid::checkEditBook(nameEdit.text(), authorEdit.text());
 
             QString newCode = codeEdit.text().trimmed().toUpper();
@@ -795,7 +801,7 @@ void MainWindow::act_edit_book()
         } catch (const AppException &ex) {
             QMessageBox::warning(&dialog, "Ошибка", ex.what());
         } catch (const std::exception &ex) {
-            QMessageBox::warning(&dialog, "Ошибка", ex.what());
+            QMessageBox::warning(&dialog, "Непредвиденная ошибка", ex.what());
         }
     });
 
@@ -804,8 +810,8 @@ void MainWindow::act_edit_book()
         const QString newCode = codeEdit.text().trimmed().toUpper();
 
         book.code   = newCode;
-        book.name   = nameEdit.text().trimmed();
-        book.author = authorEdit.text().trimmed();
+        book.name   = nameEdit.text();
+        book.author = authorEdit.text();
 
         bookModel_->UpdateBookAt(row, book);
 
@@ -862,7 +868,11 @@ void MainWindow::act_edit_reader()
 
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
-            const QString th = thirdEdit.text().trimmed();
+            firstEdit.setText(firstEdit.text().simplified());
+            secondEdit.setText(secondEdit.text().simplified());
+            thirdEdit.setText(thirdEdit.text().simplified());
+
+            const QString th = thirdEdit.text();
             const std::optional<QString> thOpt = th.isEmpty()
                                                      ? std::nullopt
                                                      : std::optional<QString>(th);
@@ -877,9 +887,9 @@ void MainWindow::act_edit_reader()
     });
 
     if (dialog.exec() == QDialog::Accepted) {
-        reader.second_name = firstEdit.text().trimmed(); // фамилия
-        reader.first_name  = secondEdit.text().trimmed(); // имя
-        reader.third_name  = thirdEdit.text().trimmed();
+        reader.second_name = firstEdit.text(); // фамилия
+        reader.first_name  = secondEdit.text(); // имя
+        reader.third_name  = thirdEdit.text();
         reader.gender = sexCombo.currentData().toBool() ? Sex::Male : Sex::Female;
 
         readerModel_->UpdateReaderAt(row, reader);
@@ -911,6 +921,9 @@ void MainWindow::act_giveout_book()
 
     connect(&okButton, &QPushButton::clicked, [&]() {
         try {
+            bookCodeEdit.setText(bookCodeEdit.text().simplified().toUpper());
+            readerIdEdit.setText(readerIdEdit.text().simplified().toUpper());
+
             InputValid::checkGiveOutInput(bookCodeEdit.text(), readerIdEdit.text());
             dialog.accept();
         } catch (const AppException &ex) {
@@ -923,8 +936,8 @@ void MainWindow::act_giveout_book()
     if (dialog.exec() != QDialog::Accepted)
         return;
 
-    const QString code     = bookCodeEdit.text().trimmed().toUpper();
-    const QString readerID = readerIdEdit.text().trimmed().toUpper();
+    const QString code     = bookCodeEdit.text();
+    const QString readerID = readerIdEdit.text();
 
     try {
         auto bookIndexOpt = bookModel_->FindBookIndex(code);
@@ -994,7 +1007,7 @@ void MainWindow::act_delete_book()
     } catch (const AppException &ex) {
         QMessageBox::warning(this, "Ошибка", ex.what());
     } catch (const std::exception &ex) {
-        QMessageBox::warning(this, "Ошибка", ex.what());
+        QMessageBox::warning(this, "Непредвиденная ошибка", ex.what());
     }
 }
 
@@ -1015,7 +1028,6 @@ void MainWindow::act_delete_reader()
 
     const QString id = readerModel_->data(index.siblingAtColumn(0), Qt::DisplayRole).toString();
 
-    // Было опасно: FindReader(id)->... (если не найдено — краш)
     const auto readerOpt = readerModel_->FindReader(id);
 
     QString prompt;
@@ -1025,7 +1037,6 @@ void MainWindow::act_delete_reader()
                      .arg(readerOpt->second_name)
                      .arg(readerOpt->first_name);
     } else {
-        // На всякий случай: пусть удаление всё равно возможно, но без ФИО
         prompt = QString("Удалить читателя %1 ?").arg(id);
     }
 
@@ -1082,7 +1093,8 @@ void MainWindow::act_search_book()
     if (dialog.exec() != QDialog::Accepted)
         return;
 
-    const QString queryRaw = searchEdit.text().trimmed();
+    searchEdit.setText(searchEdit.text().simplified());
+    const QString queryRaw = searchEdit.text();
     const QString queryCode = queryRaw.toUpper(); // для поиска по коду устойчивее
     const QString queryName = queryRaw;           // для поиска по названию оставим как есть
 
@@ -1169,7 +1181,8 @@ void MainWindow::act_search_reader()
     if (dialog.exec() != QDialog::Accepted)
         return;
 
-    const QString query = searchEdit.text().trimmed();
+    searchEdit.setText(searchEdit.text().simplified());
+    const QString query = searchEdit.text();
     const QString queryUp = query.toUpper();
 
     try {
@@ -1205,7 +1218,7 @@ void MainWindow::act_search_reader()
 
 
 /**
- * @brief Слот: получение информации (пока не реализовано).
+ * @brief Слот: получение информации о пользователе
  */
 void MainWindow::act_get_info()
 {
@@ -1294,7 +1307,7 @@ void MainWindow::act_return_book()
         const QString code = bookCodeEdit.text().trimmed();
         const QString id   = readerIdEdit.text().trimmed();
 
-        // Сохраняем твой текст сообщения "Введите код книги и ID читателя"
+        // Сохраняем текст сообщения "Введите код книги и ID читателя"
         if (code.isEmpty() || id.isEmpty()) {
             QMessageBox::warning(&dialog, "Ошибка", "Введите код книги и ID читателя");
             return;
@@ -1345,17 +1358,4 @@ void MainWindow::act_return_book()
 }
 
 
-/**
- * @brief Слот: кнопка "Получить книгу" вызывает возврат книги.
- */
-void MainWindow::on_pb_getBook_clicked() {
-    act_return_book();
-}
 
-/**
- * @brief Обработчик кнопки «Информация о читателе».
- */
-void MainWindow::on_pb_get_info_reader_clicked()
-{
-    act_get_info();
-}

@@ -21,7 +21,7 @@ StartMenu::StartMenu(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::StartMenu)
 {
-
+    this->setWindowTitle("Вход");
     ui->setupUi(this);
 }
 
@@ -44,7 +44,6 @@ StartMenu::~StartMenu()
  */
 void StartMenu::on_pb_enter_acc_clicked()
 {
-    this->setWindowTitle("Вход");
     QString login = ui->le_login->text();
     QString password = ui->le_password->text();
 

@@ -52,11 +52,6 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(LibraryQt
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        DataBaseManager.h
-        DataBaseManager.cpp
-        InputValid.h
-        InputValid.cpp
-
     )
 else()
     if(ANDROID)

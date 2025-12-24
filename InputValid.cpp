@@ -192,33 +192,31 @@ void InputValid::validatePersonNameField(const QString &value, const QString &fi
  */
 void InputValid::checkAddBook(const QString &name, const QString &author)
 {
-    const QString nameNorm = normalizeSpaces(name);
-    const QString authorNorm = normalizeSpaces(author);
 
-    if (nameNorm.isEmpty())
+    if (name.isEmpty())
         throw EmptyBookNameException("Введите название книги!");
 
-    if (kStartRepeatPunctRe.match(nameNorm).hasMatch()) {
+    if (kStartRepeatPunctRe.match(name).hasMatch()) {
         throw InvalidBookNameException("Название не может начинаться несколькими знаками пунктуации.");
     }
 
-    if (!kAllowedTitleRe.match(nameNorm).hasMatch())
+    if (!kAllowedTitleRe.match(name).hasMatch())
         throw InvalidBookNameException("Название содержит недопустимые символы.");
 
-    const int letters = countLetters(nameNorm);
-    const int digits = countDigits(nameNorm);
+    const int letters = countLetters(name);
+    const int digits = countDigits(name);
 
     if (letters + digits < 1)
         throw InvalidBookNameException("Название должно содержать буквы или цифры.");
 
-    if (hasLongRepeatedPunct(nameNorm))
+    if (hasLongRepeatedPunct(name))
         throw InvalidBookNameException("Обнаружены повторяющиеся знаки пунктуации.");
 
-    if (hasAdjacentInvalidHyphensOrApostrophes(nameNorm))
+    if (hasAdjacentInvalidHyphensOrApostrophes(name))
         throw InvalidBookNameException("Повторяющиеся дефисы/апострофы недопустимы.");
 
-    const int firstAlnum = firstAlnumIndex(nameNorm);
-    const int lastAlnum = lastAlnumIndex(nameNorm);
+    const int firstAlnum = firstAlnumIndex(name);
+    const int lastAlnum = lastAlnumIndex(name);
 
     if (firstAlnum < 0 || lastAlnum < 0)
         throw InvalidBookNameException("Нет буквенно-цифровых символов.");
@@ -226,33 +224,33 @@ void InputValid::checkAddBook(const QString &name, const QString &author)
     if (firstAlnum > 3)
         throw InvalidBookNameException("Название начинается с большого количества пунктуации.");
 
-    const int nameLen = nameNorm.size();
+    const int nameLen = name.size();
     if (nameLen - 1 - lastAlnum > 3)
         throw InvalidBookNameException("Название заканчивается большим количеством пунктуации.");
 
     if (letters > 0 && letters < 2 && digits == 0) {
-        if (!nameNorm.contains('+') && !nameNorm.contains('#'))
+        if (!name.contains('+') && !name.contains('#'))
             throw InvalidBookNameException("Название слишком короткое.");
     }
 
     // ---------- Автор ----------
-    if (authorNorm.isEmpty())
+    if (author.isEmpty())
         throw EmptyAuthorException("Введите автора!");
 
-    if (!kAuthorRe.match(authorNorm).hasMatch())
+    if (!kAuthorRe.match(author).hasMatch())
         throw InvalidAuthorException("Недопустимые символы в имени автора.");
 
-    if (hasAdjacentInvalidHyphensOrApostrophes(authorNorm))
+    if (hasAdjacentInvalidHyphensOrApostrophes(author))
         throw InvalidAuthorException("Повторяющиеся дефисы/апострофы в имени автора.");
 
-    const QChar firstA = authorNorm.front();
-    const QChar lastA  = authorNorm.back();
+    const QChar firstA = author.front();
+    const QChar lastA  = author.back();
 
     if (firstA == '-' || firstA == '\'' || firstA == '.' ||
         lastA  == '-' || lastA  == '\'' || lastA  == '.')
         throw InvalidAuthorException("Имя автора не может начинаться/заканчиваться пунктуацией.");
 
-    if (countLetters(authorNorm) < 2)
+    if (countLetters(author) < 2)
         throw InvalidAuthorException("В имени автора минимум 2 буквы.");
 }
 
@@ -282,16 +280,14 @@ void InputValid::checkAddReader(const QString &surname,
                                 const QString &name,
                                 const std::optional<QString> &thname)
 {
-    const QString sTrim = normalizeSpaces(surname);
-    const QString nTrim = normalizeSpaces(name);
 
-    if (sTrim.isEmpty())
+    if (surname.isEmpty())
         throw EmptyReaderSurnameException("Введите фамилию!");
-    validatePersonNameField(sTrim, "Фамилия");
+    validatePersonNameField(surname, "Фамилия");
 
-    if (nTrim.isEmpty())
+    if (name.isEmpty())
         throw EmptyReaderNameException("Введите имя!");
-    validatePersonNameField(nTrim, "Имя");
+    validatePersonNameField(name, "Имя");
 
     if (thname.has_value()) {
         const QString t = normalizeSpaces(thname.value());
@@ -312,8 +308,8 @@ void InputValid::checkAddReader(const QString &surname,
  */
 void InputValid::checkGiveOutInput(const QString &code, const QString &readerID)
 {
-    const QString c = code.trimmed().toUpper();
-    const QString r = readerID.trimmed().toUpper();
+    const QString c = code;;
+    const QString r = readerID;
 
     if (c.isEmpty() || r.isEmpty())
         throw InvalidInputException("Введите код книги и ID читателя!");
@@ -333,7 +329,7 @@ void InputValid::checkGiveOutInput(const QString &code, const QString &readerID)
  */
 void InputValid::checkBookSearch(const QString &query)
 {
-    const QString q = query.trimmed();
+    const QString q = query;
     if (q.isEmpty())
         throw InvalidInputException("Введите название или код книги!");
 

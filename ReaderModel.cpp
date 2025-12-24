@@ -16,7 +16,7 @@
 
 #include "ReaderModel.h"
 #include "Exception.h"
-#include "DatabaseManager.h"
+#include "DataBaseManager.h"
 
 #include <QFile>
 #include <QJsonDocument>
@@ -253,51 +253,7 @@ const QList<Reader>& ReaderModel::GetReaders() const
     return readers_;
 }
 
-/**
- * @brief Загружает список читателей из файла
- * @param filePath Путь к файлу для загрузки
- * @return true если загрузка успешна, false в случае ошибки
- */
-bool ReaderModel::LoadFromFile(const QString& filePath)
-{
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        qDebug() << "Failed to open file for reading:" << filePath;
-        return false;
-    }
 
-    QByteArray data = file.readAll();
-    QJsonDocument doc = QJsonDocument::fromJson(data);
-    if (doc.isNull() || !doc.isArray()) {
-        qDebug() << "Invalid JSON format";
-        return false;
-    }
-
-    readers_.clear();
-    QJsonArray array = doc.array();
-    for (const auto& item : array) {
-        QJsonObject obj = item.toObject();
-        Reader reader;
-        reader.ID = obj["ID"].toString();
-        reader.first_name = obj["first_name"].toString();
-        reader.second_name = obj["second_name"].toString();
-        reader.third_name = obj["third_name"].toString();
-        reader.gender = (obj["gender"].toInt() == 0 ? Sex::Female : Sex::Male);
-        QString regStr = obj["reg_date"].toString();
-        if (!regStr.isEmpty())
-            reader.reg_date = QDate::fromString(regStr, "dd/MM/yyyy");
-        else
-            reader.reg_date = QDate();
-
-        // Загрузка списка взятых книг
-        auto arr = obj["taken_books"].toArray();
-        for (const auto& item : arr) {
-            reader.taken_books.append(item.toString());
-        }
-        readers_.append(reader);
-    }
-    return true;
-}
 
 /**
  * @brief Сохраняет список читателей в файл
@@ -369,12 +325,6 @@ QString ReaderModel::GenerateReaderID(const QList<Reader> &existingReaders)
  * @param filePath Путь к XML-файлу.
  * @return true если загрузка успешна.
  *
- * Поддерживает структуру:
- * - <readers>
- *   - <reader> ... </reader>
- *     - <taken_books>
- *       - <book>CODE</book>
- *       ...
  */
 bool ReaderModel::LoadFromXml(const QString& filePath)
 {

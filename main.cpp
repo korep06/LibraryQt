@@ -19,7 +19,6 @@
 #include <QTranslator>
 #include <QLabel>
 #include <QMessageBox>
-#include <iostream>
 
 /**
  * @brief Точка входа в приложение библиотеки
